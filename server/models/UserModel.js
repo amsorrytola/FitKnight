@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
-import {genSalt} from "bcrypt"
+import {genSalt, hash} from "bcrypt"
+
+
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -10,6 +12,9 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, "Password is Required."],
+  },
+  color:{
+    type: String,
   },
   firstName: {
     type: String,
@@ -32,18 +37,39 @@ const userSchema = new mongoose.Schema({
     required: true,
     enum: ["Squire", "Knight"],
   },
-  fitnessGoals: {
-    type: String,
-  },
-  workoutPreferences: {
-    type: String,
-  },
-  availability: {
-    type: String,
-  },
+  FitnessGoals: [
+    {
+      value: { type: String,},
+      label: { type: String,},
+    },
+  ],
+  Preferences: [
+    {
+      value: { type: String,},
+      label: { type: String,},
+    },
+  ],
+  availability: [
+    {
+      value: { type: String,},
+      label: { type: String,},
+    },
+  ],
+  
   location: {
+    lat:{type: String},
+    lng:{type:String}
+  },
+  activityType:[{
+    value:{type: String},
+    label:{type:String},
+  }],
+  schedule:[{
+    value:{type: String},
+    label:{type:String},
+  }],
+  address:{
     type: String,
-
   },
   groups: [
     {
