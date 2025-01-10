@@ -1,2 +1,2 @@
-used: node.js monogodbAtlas vite shadcn tailwindcss react-router-dom express dotenv cors cookie-parser mongoose bcrypt jsonwebtoken nodemon  react-select axios creattable react-leaflet leaflet react-modal zustand react-icons multer react-lottie
+used: node.js monogodbAtlas vite shadcn tailwindcss react-router-dom express dotenv cors cookie-parser mongoose bcrypt jsonwebtoken nodemon  react-select axios creattable react-leaflet leaflet react-modal zustand react-icons multer react-lottie emoji-picker-react tooltip
 mvc model

@@ -21,36 +21,38 @@ const AuthRoute = ({ children }) => {
 };
 
 function App() {
-  const {userInfo, setUserInfo} = useAppStore();
+  const { userInfo, setUserInfo } = useAppStore();
   const [loding, setLoading] = useState(true);
 
-  useEffect(()=>{
-    const getUserData = async() => {
+  useEffect(() => {
+    const getUserData = async () => {
       try {
-        const response = await apiClient.get(GET_USER_INFO,{withCredentials: true});
-        if(response.status===200 && response.data.id){
+        const response = await apiClient.get(GET_USER_INFO, {
+          withCredentials: true,
+        });
+        if (response.status === 200 && response.data.id) {
           setUserInfo(response.data);
-        }else{
+        } else {
           setUserInfo(undefined);
         }
-        console.log({response});
-        
+        console.log({ response });
       } catch (error) {
-        setUserInfo(undefined)
-        console.log({error});
-      }finally{
+        setUserInfo(undefined);
+        console.log({ error });
+      } finally {
         setLoading(false);
       }
     };
-    if(!userInfo){
+    if (!userInfo) {
       getUserData();
-    }else{
+    } else {
       setLoading(false);
     }
+  }, [userInfo, setUserInfo]);
 
-  },[userInfo, setUserInfo]);
-
-  if(loding) {return <div>Loading...</div>}
+  if (loding) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <BrowserRouter>
@@ -63,7 +65,14 @@ function App() {
             </AuthRoute>
           }
         />
-        <Route path="/chat" element={<Chat />} />
+        <Route
+          path="/chat"
+          element={
+            <PrivateRoute>
+              <Chat />
+            </PrivateRoute>
+          }
+        />
         <Route
           path="/profile"
           element={
