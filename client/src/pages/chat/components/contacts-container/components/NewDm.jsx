@@ -23,6 +23,7 @@ import { SEARCH_CONTACTS_ROUTES } from "../../../../../utils/constants.js";
 import { Avatar, AvatarImage } from "../../../../../components/ui/avatar.jsx";
 import { getColor } from "../../../../../lib/utils.js";
 import { useAppStore } from "../../../../../store/store.js";
+import { HOST } from "../../../../../utils/constants.js";
 
 function NewDm() {
   const {setSelectedChatData, setSelectedChatType} = useAppStore();
@@ -100,7 +101,7 @@ function NewDm() {
                         <AvatarImage
                           src={`${HOST}/${contact.image}`}
                           alt="profile"
-                          className="object-cover w-full h-full bg-black"
+                          className="object-cover w-full h-full bg-black rounded-full"
                         />
                       ) : (
                         <div
