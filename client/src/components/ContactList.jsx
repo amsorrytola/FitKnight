@@ -16,6 +16,7 @@ function ContactList({ contacts, isChannel = false }) {
     console.log("lelele", contacts);
   }
   const handleClick = (contact) => {
+    console.log("CONTACt",contact);
     if (isChannel) setSelectedChatType("channel");
     else setSelectedChatType("contact");
     setSelectedChatData(contact);

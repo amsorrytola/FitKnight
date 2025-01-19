@@ -1,3 +1,17 @@
+import Batgirl from "../../assets/Gotham-Knights-Batgirl-Gameplay-Trailer-Comic-Con-2022.avif";
+import Shadow from "../../assets/Shadow.jpg";
+import Robin from "../../assets/robin.avif";
+import Renne from "../../assets/Renne.webp";
+import RedHood from "../../assets/Red Hood.avif";
+import Penguin from "../../assets/Penguin.webp";
+import Owl from "../../assets/Owl.avif";
+import Nightwing from "../../assets/Nightwing.avif";
+import Lucius from "../../assets/lucius.jpg";
+import Harley from "../../assets/Harley.jpeg";
+import Freeze from "../../assets/freeze.jpg";
+import Clay from "../../assets/clayface.jpg";
+import Bruce from "../../assets/Bruce_Wayne.PNG.webp";
+
 export const predefinedOptions = {
   fitnessGoals: [
     { value: "weight-loss", label: "Weight Loss" },
@@ -69,5 +83,54 @@ export const predefinedOptions = {
     { value: "custom-schedule", label: "Custom Schedule" },
     { value: "monthly", label: "Monthly" },
   ],
-  
+  fitnessLevels: [
+    { value: "sedentary", label: "Sedentary" },
+    { value: "lightly-active", label: "Lightly Active" },
+    { value: "moderately-active", label: "Moderately Active" },
+    { value: "active", label: "Active" },
+    { value: "athletic", label: "Athletic" },
+    { value: "highly-active", label: "Highly Active" },
+    { value: "professional-athlete", label: "Professional Athlete" },
+    { value: "recovering", label: "Recovering" },
+    { value: "beginner", label: "Beginner" },
+    { value: "intermediate", label: "Intermediate" },
+    { value: "advanced", label: "Advanced" },
+  ],
+  daysOfWeek: [
+    { value: "Monday", label: "Monday" },
+    { value: "Tuesday", label: "Tuesday" },
+    { value: "Wednesday", label: "Wednesday" },
+    { value: "Thursday", label: "Thursday" },
+    { value: "Friday", label: "Friday" },
+    { value: "Saturday", label: "Saturday" },
+    { value: "Sunday", label: "Sunday" },
+  ],
+  buddyTypes: [
+    { value: "encourager", label: "Encourager" },
+    { value: "competitor", label: "Competitor" },
+    { value: "trainer", label: "Trainer" },
+    { value: "accountability-partner", label: "Accountability Partner" },
+    { value: "learning-buddy", label: "Learning Buddy" },
+    { value: "social-butterfly", label: "Social Butterfly" },
+    { value: "early-riser", label: "Early Riser" },
+    { value: "night-owl", label: "Night Owl" },
+    { value: "solo-booster", label: "Solo Booster" },
+    { value: "explorer", label: "Explorer" },
+    { value: "flexible-partner", label: "Flexible Partner" },
+  ],
+  characters: [
+    { name: "Batgirl", image: Batgirl },
+    { name: "Nightwing", image: Nightwing },
+    { name: "Red Hood", image: RedHood },
+    { name: "Robin", image: Robin },
+    { name: "Renee Montoya", image: Renne },
+    { name: "Lucius Fox", image: Lucius },
+    { name: "Court of Owls", image: Owl },
+    { name: "Harley Quinn", image: Harley },
+    { name: "Mr. Freeze", image: Freeze },
+    { name: "Clayface", image: Clay },
+    { name: "League of Shadows", image: Shadow },
+    { name: "Penguin", image: Penguin },
+    { name: "Bruce Wayne/Batman", image: Bruce },
+  ],
 };

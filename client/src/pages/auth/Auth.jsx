@@ -1,5 +1,5 @@
 import Background from "../../assets/login4.webp";
-import Victory from "../../assets/victory.svg";
+import Logo from "../../assets/Gotham_Knights_Logo.svg.png";
 import Google from "../../assets/GoogleLogo.png";
 import Channeli from "../../assets/Channelilogo.svg";
 import { Input } from "../../components/ui/input";
@@ -23,6 +23,7 @@ import { apiClient } from "../../lib/api-client.js";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../../store/store.js";
 
+
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,16 +31,14 @@ const Auth = () => {
   const [file, setfile] = useState(null);
   const [role, setrole] = useState("");
   const [FitnessGoals, setFitnessGoals] = useState([]);
-  const [Preferences, setPreferences] = useState(
-    []
-  );
+  const [Preferences, setPreferences] = useState([]);
   const [activityType, setactivityType] = useState([]);
   const [availability, setavailability] = useState([]);
   const [schedule, setschedule] = useState([]);
   const [location, setLocation] = useState(null);
   const [address, setAddress] = useState("");
   const navigate = useNavigate();
-  const {setUserInfo} = useAppStore();
+  const { setUserInfo, userInfo, setSquireInfo, setChannelInfo } = useAppStore();
 
   const handleLocationChange = (newLocation) => {
     setLocation(newLocation);
@@ -95,55 +94,113 @@ const Auth = () => {
 
   //Login
   const handleLogin = async () => {
-    if (validateLogin()) {
+    if (!validateLogin()) {
+      return; // Stop execution if validation fails
+    }
+  
+    try {
       const response = await apiClient.post(
         LOGIN_ROUTE,
         { email, password },
         { withCredentials: true }
       );
-      console.log(response);
-      if(response.data.user.id){
+  
+      // Check if user exists in the response
+      if (response.data?.user?.id) {
         setUserInfo(response.data.user);
-        if(response.data.user.profileSetup){
-          navigate("/dashboard")
-        }else navigate("/profile");
+        console.log(response.data.user);
+        if (response.data.user.profileSetup) {
+          navigate("/dashboard");
+        } else {
+          navigate("/profile");
+        }
       }
-      
+    } catch (error) {
+      // Handle different error cases based on server response
+      if (error.response) {
+        const { status, data } = error.response;
+  
+        if (status === 404) {
+          toast.error("User does not exist. Please check your email or sign up.");
+        } else if (status === 401) {
+          toast.error("Incorrect password. Please try again.");
+        } else {
+          toast.error(data?.message || "An unexpected error occurred. Please try again later.");
+        }
+      } else {
+        console.error("Error during login:", error);
+        alert("Unable to connect to the server. Please check your internet connection.");
+      }
     }
   };
+  
   const handleLoginwithGoogle = async () => {};
   const handleLoginwithChanneli = async () => {};
 
   //Signup
+
   const handleSignup = async () => {
     if (validateSignup()) {
-      const response = await apiClient.post(
-        SIGNUP_ROUTES,
-        { email, password, role, FitnessGoals,Preferences,activityType,availability,schedule,location,address},
-        { withCredentials: true }
-      );
-      alert("done");
-      console.log(response);
-      if(response.data.user._id){
-        setUserInfo(response.data.user);
-        if(response.data.user.profileSetup){
-          navigate("/dashboard")
-        }else navigate("/profile");
+      try {
+        const payload =
+          role === "Squire"
+            ? { email, password, role, FitnessGoals, Preferences, availability }
+            : {
+                email,
+                password,
+                role,
+                activityType,
+                schedule,
+                location,
+                address,
+              };
+  
+        console.log("Signup Payload:", payload); // Log payload to verify data
+  
+        const response = await apiClient.post(SIGNUP_ROUTES, payload, {
+          withCredentials: true,
+        });
+        console.log("Signup Response:", response);
+  
+        alert("Signup successful!");
+  
+        // Set user info in Zustand store
+        const { user, squire, channel } = response.data;
+        setUserInfo(user); // Always set user info
+        console.log("Set User Info:", user);
+  
+        // Set role-specific data
+        if (user.role === "Squire") {
+          setSquireInfo(squire);
+        } else if (user.role === "Knight") {
+          setChannelInfo(channel);
+        }
+  
+        // Navigate based on profile setup status
+        if (user.profileSetup) {
+          navigate("/dashboard");
+        } else {
+          navigate("/profile");
+        }
+      } catch (error) {
+        console.error("Error during signup:", error.response || error);
+        alert(error.response?.data?.message || "Something went wrong!");
       }
-      
     }
   };
+  
+
   const handleSignupwithGoogle = async () => {};
   const handleSignupwithChanneli = async () => {};
 
   return (
-    <div className="h-[100vh] w-[100vw] flex items-center justify-center">
+    <div className="h-[100vh] w-[100vw] flex items-center justify-center bg-[#1b1c24] ">
       <div className="h-[95vh] bg-white border-2 border-white text-opacity-90 shadow-2xl w-[80vw] md:w-[90vw] lg:w-[70vw] xl:w-[60vw] rounded-3xl grid xl:grid-cols-2 ">
         <div className="flex flex-col gap-10 items-center justify-center">
           <div className="flex items-center justify-center flex-col">
             <div className="flex items-center justify-center">
               <h1 className="text-5xl font-bold md:text-6xl">Welcome</h1>
-              <img src={Victory} alt="Victory Emoji" className="h-[100px]" />
+              <img src={Logo} alt="logo" className="h-[100px]" />
             </div>
             <p className="font-medium text-center">
               Join the crusade—find your fitness ally today!
@@ -181,24 +238,25 @@ const Auth = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
-                <Button className="rounded-full p-6" onClick={handleLogin}>
+                <Button className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-semibold rounded-full w-full h-[50px]  hover:from-purple-700 hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 text-lg 
+                  shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105    p-2" onClick={handleLogin}>
                   Login
                 </Button>
                 <hr />
                 <button
-                  className="rounded-full border-2 p-2 flex items-center justify-center"
+                  className="flex items-center justify-center w-full rounded-full border-2 border-gray-300 bg-white hover:bg-gray-100 shadow-lg transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 p-2"
                   onClick={handleLoginwithChanneli}
                 >
                   <img src={Channeli} alt="" className="h-[30px]" />
-                  <p className="pl-4">Login with Channeli</p>
+                  <p className="pl-4 text-sm font-semibold">Login with Channeli</p>
                 </button>
 
                 <button
-                  className="rounded-full border-2 p-1 flex items-center justify-center"
+                  className="flex items-center justify-center w-full rounded-full border-2 border-gray-300 bg-white hover:bg-gray-100 shadow-lg transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 p-1"
                   onClick={handleLoginwithGoogle}
                 >
                   <img src={Google} alt="" className="h-[40px]" />
-                  <p className="pl-2">Login with Google</p>
+                  <p className="pl-2 text-sm font-semibold">Login with Google</p>
                 </button>
               </TabsContent>
               <TabsContent className="flex flex-col gap-5" value="signup">
@@ -467,26 +525,35 @@ const Auth = () => {
                   </div>
                 )}
 
-                <Button className="rounded-full p-6" onClick={handleSignup}>
+                <Button
+                  className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-semibold rounded-full w-full h-[50px]  hover:from-purple-700 hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 text-lg 
+                  shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105    p-2"
+                  onClick={handleSignup}
+                >
                   Signup
                 </Button>
+
                 <hr />
 
-                <button
-                  className="rounded-full border-2 p-2 flex items-center justify-center"
+                <Button
+                  className="flex items-center justify-center w-full rounded-full border-2 border-gray-300 bg-white hover:bg-gray-100 shadow-lg transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 p-6"
                   onClick={handleSignupwithChanneli}
                 >
                   <img src={Channeli} alt="" className="h-[30px]" />
-                  <p className="pl-4">Signup with Channeli</p>
-                </button>
+                  <p className="pl-3 text-[14px] font-semibold text-gray-700">
+                    Signup with Channeli
+                  </p>
+                </Button>
 
-                <button
-                  className="rounded-full border-2 p-1 flex items-center justify-center"
+                <Button
+                  className="flex items-center justify-center w-full rounded-full border-2 border-gray-300 bg-white hover:bg-gray-100 shadow-lg transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 p-6"
                   onClick={handleSignupwithGoogle}
                 >
-                  <img src={Google} alt="" className="h-[40px]" />
-                  <p className="pl-2">Signup with Google</p>
-                </button>
+                  <img src={Google} alt="Google Icon" className="h-10 w-10" />
+                  <p className="pl-3  text-[14px] font-semibold text-gray-700">
+                    Signup with Google
+                  </p>
+                </Button>
               </TabsContent>
             </Tabs>
           </div>
@@ -495,7 +562,7 @@ const Auth = () => {
           <img
             src={Background}
             alt="background login"
-            className="h-[90%] w-[90%]"
+            className="h-[80%] w-[95%] rounded-[100%]"
           />
         </div>
       </div>

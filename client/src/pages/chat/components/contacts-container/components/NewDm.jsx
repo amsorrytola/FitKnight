@@ -50,6 +50,7 @@ function NewDm() {
   };
 
   const selectNewContact = (contact) => {
+    console.log("NEW DM",contact);
     setOpenNewContactModal(false);
     setSelectedChatType("contact");
     setSelectedChatData(contact);

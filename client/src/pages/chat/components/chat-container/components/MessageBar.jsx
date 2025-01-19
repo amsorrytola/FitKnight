@@ -5,13 +5,19 @@ import { IoSend } from "react-icons/io5";
 import { RiEmojiStickerLine } from "react-icons/ri";
 import { useSocket } from "../../../../../context/SocketContext";
 import { useAppStore } from "../../../../../store/store";
-import {apiClient} from "../../../../../lib/api-client.js"
+import { apiClient } from "../../../../../lib/api-client.js";
 import { UPLOAD_FILE_ROUTE } from "../../../../../utils/constants.js";
-
 
 function MessageBar() {
   const socket = useSocket();
-  const {selectedChatType, selectedChatData, userInfo, setIsUploading, setFileUploadProgress} = useAppStore();
+  const {
+    selectedChatType,
+    selectedChatData,
+    userInfo,
+    setIsUploading,
+    setFileUploadProgress,
+    addMessages,
+  } = useAppStore();
   const emojiRef = useRef();
   const fileInputRef = useRef();
   const [message, setmessage] = useState("");
@@ -22,31 +28,32 @@ function MessageBar() {
   };
 
   const handleSendMessage = async () => {
-    if(selectedChatType === "contact"){
-      socket.emit("sendMessage",{
+    if (selectedChatType === "contact") {
+      socket.emit("sendMessage", {
         sender: userInfo.id,
         content: message,
         recipient: selectedChatData._id,
         messageType: "text",
         fileUrl: undefined,
-      })
-    }else if (selectedChatType === "channel"){
-      socket.emit("send-channel-message",{
+      });
+    } else if (selectedChatType === "channel") {
+      socket.emit("send-channel-message", {
         sender: userInfo.id,
         content: message,
         messageType: "text",
         fileUrl: undefined,
         channelId: selectedChatData._id,
-      })
+      });
     }
+
     setmessage("");
   };
 
   const handleAttachmentClick = () => {
-    if(fileInputRef.current){
+    if (fileInputRef.current) {
       fileInputRef.current.click();
     }
-  }
+  };
 
   const handleAttachmentChange = async (event) => {
     try {
@@ -57,12 +64,11 @@ function MessageBar() {
         setIsUploading(true);
         const response = await apiClient.post(UPLOAD_FILE_ROUTE, formData, {
           withCredentials: true,
-          onUploadProgress: (data)=>{
-            
-          setFileUploadProgress(Math.round((100*data.loaded)/data.total));
-          }
+          onUploadProgress: (data) => {
+            setFileUploadProgress(Math.round((100 * data.loaded) / data.total));
+          },
         });
-  
+
         if (response.status === 200 && response.data) {
           setIsUploading(false);
           if (selectedChatType === "contact") {
@@ -74,25 +80,24 @@ function MessageBar() {
               fileUrl: response.data.filePath,
             });
           }
-        }else if(selectedChatType === "channel"){
-          socket.email("send-channel-message",{
+        } else if (selectedChatType === "channel") {
+          socket.email("send-channel-message", {
             sender: userInfo.id,
             content: undefined,
             messageType: "file",
             fileUrl: response.data.filePath,
             channelId: selectedChatData._id,
-          })
+          });
         }
       }
-  
+
       console.log(file);
     } catch (error) {
       setIsUploading(false);
-      console.log("lo ji error: ",error);
+      console.log("lo ji error: ", error);
     }
   };
-  
-  
+
   return (
     <div className="h-[10vh] bg-[#1c1d25] flex justify-center items-center px-8 mb-6 gap-6">
       <div className="flex-1 flex bg-[#2a2b33] rounded-md items-center gap-5 pr-5 ">
@@ -105,11 +110,18 @@ function MessageBar() {
             setmessage(e.target.value);
           }}
         />
-        <button className="text-neutral-500 focus:border-none focus:outline-none focus:text-white duration-300 transition-all"
-        onClick={handleAttachmentClick}>
+        <button
+          className="text-neutral-500 focus:border-none focus:outline-none focus:text-white duration-300 transition-all"
+          onClick={handleAttachmentClick}
+        >
           <GrAttachment className="text-2xl" />
         </button>
-        <input type="file" className="hidden" ref={fileInputRef} onChange={handleAttachmentChange}/>
+        <input
+          type="file"
+          className="hidden"
+          ref={fileInputRef}
+          onChange={handleAttachmentChange}
+        />
         <div className="relative">
           <button
             className="text-neutral-500 focus:border-none focus:outline-none focus:text-white duration-300 transition-all"

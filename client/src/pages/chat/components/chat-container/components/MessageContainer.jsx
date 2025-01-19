@@ -35,13 +35,13 @@ function MessageContainer() {
         );
         if (response.data.messages) {
           setSelectedChatMessages(response.data.messages);
+          console.log("SelectedChatMessages",response.data.messages)
         }
       } catch (error) {
         console.log({ error });
       }
     };
-    console.log("Le Id : ",selectedChatData);
-    console.log("Le userInfo : ",userInfo);
+
     const getChannelMessages = async () => {
       try {
         const response = await apiClient.get(
@@ -181,8 +181,6 @@ function MessageContainer() {
     </div>
   );
   const renderChannelMessages = (message) => {
-    console.log("LOOOOOOOO Message :", message);
-    console.log("LOOOOOOOO Userinfo :", userInfo);
     return (
     <div
       className={`mt-5 ${

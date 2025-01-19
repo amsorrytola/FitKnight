@@ -21,36 +21,55 @@ const AuthRoute = ({ children }) => {
 };
 
 function App() {
-  const { userInfo, setUserInfo } = useAppStore();
-  const [loding, setLoading] = useState(true);
-
+  const { userInfo, setUserInfo, squireInfo, setSquireInfo, knightInfo, setKnightInfo } = useAppStore();
+  const [loading, setLoading] = useState(true);
+  
   useEffect(() => {
     const getUserData = async () => {
       try {
         const response = await apiClient.get(GET_USER_INFO, {
           withCredentials: true,
         });
-        if (response.status === 200 && response.data.id) {
-          setUserInfo(response.data);
+  
+        if (response.status === 200 && response.data.user) {
+          const { user, squire, knight } = response.data;
+  
+          // Set base user info
+          setUserInfo(user);
+  
+          // Set role-specific data
+          if (user.role === "Squire" && squire) {
+            setSquireInfo(squire);
+            setKnightInfo(null); // Clear Knight info if switching roles
+          } else if (user.role === "Knight" && knight) {
+            setKnightInfo(knight);
+            setSquireInfo(null); // Clear Squire info if switching roles
+          }
         } else {
-          setUserInfo(undefined);
+          // Clear state if no user data is returned
+          setUserInfo(null);
+          setSquireInfo(null);
+          setKnightInfo(null);
         }
-        console.log({ response });
       } catch (error) {
-        setUserInfo(undefined);
-        console.log({ error });
+        console.error("Error fetching user data:", error);
+        setUserInfo(null);
+        setSquireInfo(null);
+        setKnightInfo(null);
       } finally {
         setLoading(false);
       }
     };
+  
     if (!userInfo) {
       getUserData();
     } else {
       setLoading(false);
     }
-  }, [userInfo, setUserInfo]);
+  }, [userInfo, setUserInfo, setSquireInfo, setKnightInfo]);
+  
 
-  if (loding) {
+  if (loading) {
     return <div>Loading...</div>;
   }
 
