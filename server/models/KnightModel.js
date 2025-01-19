@@ -1,5 +1,7 @@
+import mongoose from "mongoose";
+
 const knightSchema = new mongoose.Schema({
-    baseUser: { type: mongoose.Schema.Types.ObjectId, ref: "Users", required: true }, // Reference to BaseUser
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "Users", required: true }, // Reference to BaseUser
     groups: { type: mongoose.Schema.Types.ObjectId, ref: "Channels" }, // Group created by the Knight
     reels: [{ type: mongoose.Schema.Types.ObjectId, ref: "Reel" }], // Reels uploaded by the Knight
   

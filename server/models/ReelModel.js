@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 const reelSchema = new mongoose.Schema({
     title: { type: String, required: true },
     description: { type: String, required: true },

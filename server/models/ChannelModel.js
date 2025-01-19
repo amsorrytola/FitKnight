@@ -3,9 +3,9 @@ import mongoose from "mongoose";
 const channelSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
+    required: false,
   },
-  members: [{ type: mongoose.Schema.ObjectId, ref: "Users", required: true }],
+  members: [{ type: mongoose.Schema.ObjectId, ref: "Users", required: false }],
   admin: { type: mongoose.Schema.ObjectId, ref: "Users", required: true },
   messages: [
     { type: mongoose.Schema.ObjectId, ref: "Message", required: false },
