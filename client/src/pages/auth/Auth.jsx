@@ -18,11 +18,14 @@ import { TabsContent, TabsTrigger } from "@radix-ui/react-tabs";
 import { predefinedOptions } from "../../utils/constants/predefinedOptions.js";
 import { useState } from "react";
 import { toast } from "sonner";
-import { LOGIN_ROUTE, SIGNUP_ROUTES } from "../../utils/constants.js";
+import {
+  LOGIN_ROUTE,
+  SIGNUP_ROUTES,
+  ADD_PROFILE_IMAGE_ROUTE,
+} from "../../utils/constants.js";
 import { apiClient } from "../../lib/api-client.js";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../../store/store.js";
-
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -38,7 +41,13 @@ const Auth = () => {
   const [location, setLocation] = useState(null);
   const [address, setAddress] = useState("");
   const navigate = useNavigate();
-  const { setUserInfo, userInfo, setSquireInfo, setChannelInfo } = useAppStore();
+  const {
+    setUserInfo,
+    userInfo,
+    setSquireInfo,
+    setKnightInfo,
+    setChannelInfo,
+  } = useAppStore();
 
   const handleLocationChange = (newLocation) => {
     setLocation(newLocation);
@@ -85,29 +94,29 @@ const Auth = () => {
   };
 
   //File
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      setfile(selectedFile);
-    }
-  };
 
   //Login
   const handleLogin = async () => {
     if (!validateLogin()) {
       return; // Stop execution if validation fails
     }
-  
+
     try {
       const response = await apiClient.post(
         LOGIN_ROUTE,
         { email, password },
         { withCredentials: true }
       );
-  
+
       // Check if user exists in the response
       if (response.data?.user?.id) {
         setUserInfo(response.data.user);
+        if (response.data.user.role == "Squire") {
+          setSquireInfo(response.data.squire);
+        } else {
+          setKnightInfo(response.data.knight);
+          setChannelInfo(response.data.channels);
+        }
         console.log(response.data.user);
         if (response.data.user.profileSetup) {
           navigate("/dashboard");
@@ -119,21 +128,28 @@ const Auth = () => {
       // Handle different error cases based on server response
       if (error.response) {
         const { status, data } = error.response;
-  
+
         if (status === 404) {
-          toast.error("User does not exist. Please check your email or sign up.");
+          toast.error(
+            "User does not exist. Please check your email or sign up."
+          );
         } else if (status === 401) {
           toast.error("Incorrect password. Please try again.");
         } else {
-          toast.error(data?.message || "An unexpected error occurred. Please try again later.");
+          toast.error(
+            data?.message ||
+              "An unexpected error occurred. Please try again later."
+          );
         }
       } else {
         console.error("Error during login:", error);
-        alert("Unable to connect to the server. Please check your internet connection.");
+        alert(
+          "Unable to connect to the server. Please check your internet connection."
+        );
       }
     }
   };
-  
+
   const handleLoginwithGoogle = async () => {};
   const handleLoginwithChanneli = async () => {};
 
@@ -154,30 +170,50 @@ const Auth = () => {
                 location,
                 address,
               };
-  
+
         console.log("Signup Payload:", payload); // Log payload to verify data
-  
+
         const response = await apiClient.post(SIGNUP_ROUTES, payload, {
           withCredentials: true,
         });
-        console.log("Signup Response:", response);
-  
-        alert("Signup successful!");
-  
-        // Set user info in Zustand store
-        const { user, squire, channel } = response.data;
-        setUserInfo(user); // Always set user info
-        console.log("Set User Info:", user);
-  
-        // Set role-specific data
-        if (user.role === "Squire") {
-          setSquireInfo(squire);
-        } else if (user.role === "Knight") {
-          setChannelInfo(channel);
+
+        let responseImage;
+        if (file) {
+          const formData = new FormData();
+          formData.append("profile-image", file);
+          responseImage = await apiClient.post(
+            ADD_PROFILE_IMAGE_ROUTE,
+            formData,
+            {
+              withCredentials: true,
+            }
+          );
+          if (responseImage.status === 200 && responseImage.data.image) {
+            toast.success("Image updated successfully");
+          }
         }
-  
+
+        console.log("Signup Response:", response);
+
+        alert("Signup successful!");
+
+        // Set user info in Zustand store
+        if(responseImage ){
+          setUserInfo({...response.data.user,image: responseImage.data.image});
+        }else if (response){
+          setUserInfo(response.data.user);
+        }
+
+        // Set role-specific data
+        if (response.data.user.role === "Squire") {
+          setSquireInfo(response.data.squire);
+        } else {
+          setKnightInfo(response.data.knight);
+          setChannelInfo([response.data.channels]);
+        }
+
         // Navigate based on profile setup status
-        if (user.profileSetup) {
+        if (response.data.user.profileSetup) {
           navigate("/dashboard");
         } else {
           navigate("/profile");
@@ -188,7 +224,6 @@ const Auth = () => {
       }
     }
   };
-  
 
   const handleSignupwithGoogle = async () => {};
   const handleSignupwithChanneli = async () => {};
@@ -238,8 +273,11 @@ const Auth = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
-                <Button className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-semibold rounded-full w-full h-[50px]  hover:from-purple-700 hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 text-lg 
-                  shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105    p-2" onClick={handleLogin}>
+                <Button
+                  className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-semibold rounded-full w-full h-[50px]  hover:from-purple-700 hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 text-lg 
+                  shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105    p-2"
+                  onClick={handleLogin}
+                >
                   Login
                 </Button>
                 <hr />
@@ -248,7 +286,9 @@ const Auth = () => {
                   onClick={handleLoginwithChanneli}
                 >
                   <img src={Channeli} alt="" className="h-[30px]" />
-                  <p className="pl-4 text-sm font-semibold">Login with Channeli</p>
+                  <p className="pl-4 text-sm font-semibold">
+                    Login with Channeli
+                  </p>
                 </button>
 
                 <button
@@ -256,7 +296,9 @@ const Auth = () => {
                   onClick={handleLoginwithGoogle}
                 >
                   <img src={Google} alt="" className="h-[40px]" />
-                  <p className="pl-2 text-sm font-semibold">Login with Google</p>
+                  <p className="pl-2 text-sm font-semibold">
+                    Login with Google
+                  </p>
                 </button>
               </TabsContent>
               <TabsContent className="flex flex-col gap-5" value="signup">
@@ -285,7 +327,12 @@ const Auth = () => {
                   <Input
                     type="file"
                     className="rounded-full  w-[45%]"
-                    onChange={handleFileChange}
+                    onChange={(e) => {
+                      const selectedFile = e.target.files[0];
+                      if (selectedFile) {
+                        setfile(selectedFile);
+                      }
+                    }}
                   />
                   <Select onValueChange={(value) => setrole(value)}>
                     <SelectTrigger className="w-[50%] rounded-full ">

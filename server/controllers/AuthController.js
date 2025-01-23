@@ -45,7 +45,8 @@ export const signup = async (req, res) => {
     const user = await User.create({ email, password, role });
 
     let roleData = null;
-    let channel = null;
+    let channels = null;
+    let knight = null;
 
     // Role-specific logic
     if (role === "Squire") {
@@ -56,23 +57,28 @@ export const signup = async (req, res) => {
         availability,
       });
       roleData = {
+        squireId: squire._id,
         FitnessGoals: squire.FitnessGoals.map(({ value, label }) => ({
-            value,
-            label,
-          })),
+          value,
+          label,
+        })),
         Preferences: squire.Preferences.map(({ value, label }) => ({
-            value,
-            label,
-          })),
+          value,
+          label,
+        })),
         availability: squire.availability.map(({ value, label }) => ({
-            value,
-            label,
-          })),
+          value,
+          label,
+        })),
+        buddies: squire.buddies,
+        groups: squire.groups,
       };
     } else if (role === "Knight") {
-      const knight = await Knight.create({ user: user.id });
-      channel = await Channel.create({
-        admin: knight.id,
+      knight = await Knight.create({ user: user.id });
+      channels = await Channel.create({
+        admin: user.id,
+        name: "Fitness Group",
+        image: "",
         activityType,
         schedule,
         location,
@@ -97,7 +103,9 @@ export const signup = async (req, res) => {
         profileSetup: user.profileSetup,
         role: user.role,
       },
-      ...(role === "Squire" ? { squire: roleData } : (channel ? { channel } : {})),
+      ...(role === "Squire"
+        ? { squire: roleData }
+        : { knight: knight, channels:  channels  }),
     });
   } catch (error) {
     console.error("Error during signup:", error.message);
@@ -105,28 +113,33 @@ export const signup = async (req, res) => {
   }
 };
 
-
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and Password are required." });
+      return res
+        .status(400)
+        .json({ message: "Email and Password are required." });
     }
 
     // Find the user
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: "User not found. Please sign up first." });
+      return res
+        .status(404)
+        .json({ message: "User not found. Please sign up first." });
     }
 
     // Validate password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid password. Please try again." });
+      return res
+        .status(401)
+        .json({ message: "Invalid password. Please try again." });
     }
 
     let roleData = null;
-    let channel = null;
+    let channels = null;
 
     // Handle role-specific data
     if (user.role === "Squire") {
@@ -135,38 +148,41 @@ export const login = async (req, res) => {
         return res.status(500).json({ message: "Squire data not found." });
       }
       roleData = {
+        squireId: squire._id,
         fitnessLevel: squire.fitnessLevel.map(({ value, label }) => ({
-            value,
-            label,
-          })),
+          value,
+          label,
+        })),
         availableDays: squire.availableDays.map(({ value, label }) => ({
-            value,
-            label,
-          })),
+          value,
+          label,
+        })),
         buddyType: squire.buddyType.map(({ value, label }) => ({
-            value,
-            label,
-          })),
+          value,
+          label,
+        })),
         FitnessGoals: squire.FitnessGoals.map(({ value, label }) => ({
-            value,
-            label,
-          })),
+          value,
+          label,
+        })),
         Preferences: squire.Preferences.map(({ value, label }) => ({
-            value,
-            label,
-          })),
+          value,
+          label,
+        })),
         location: squire.location,
         address: squire.address,
         achievements: squire.achievements,
         buddies: squire.buddies,
+        groups: squire.groups,
       };
     } else if (user.role === "Knight") {
       const knight = await Knight.findOne({ user: user.id });
       if (!knight) {
         return res.status(500).json({ message: "Knight data not found." });
       }
-      channel = await Channel.findOne({ admin: knight.id });
+      channels = await Channel.find({ admin: user._id });
       roleData = {
+        knightId: knight._id,
         achievements: knight.achievements,
         qualifications: knight.qualifications,
         groups: knight.groups,
@@ -191,9 +207,15 @@ export const login = async (req, res) => {
         image: user.image,
         profileSetup: user.profileSetup,
         role: user.role,
+        age: user.age,
+        shortDescription: user.shortDescription,
+        gender: user.gender,
+        phoneNumber: user.phoneNumber,
+        privacySettings: user.privacySettings,
       },
-      ...(user.role === "Squire" ? { squire: roleData } : { knight: roleData }),
-      ...(channel ? { channel } : {}),
+      ...(user.role === "Squire"
+        ? { squire: roleData }
+        : { knight: roleData, channels:  channels  }),
     });
   } catch (error) {
     console.error("Error during login:", error.message);
@@ -201,17 +223,27 @@ export const login = async (req, res) => {
   }
 };
 
-
 export const getUserInfo = async (request, response, next) => {
   try {
-    const userData = await User.findById(request.userId);
+    let userData = null;
+
+    // Check request query instead of request body for GET request
+    const { memberId } = request.query;
+
+    if (memberId) {
+      console.log("Member ID from query:", memberId);
+      userData = await User.findById(memberId);
+    } else {
+      userData = await User.findById(request.userId);
+    }
+
     if (!userData) {
       return response.status(404).send("User with the given ID not found.");
     }
 
     // Base user information
     const userResponse = {
-      id: userData.id,
+      id: userData._id,
       email: userData.email,
       profileSetup: userData.profileSetup,
       firstName: userData.firstName,
@@ -221,12 +253,15 @@ export const getUserInfo = async (request, response, next) => {
       age: userData.age,
       shortDescription: userData.shortDescription,
       gender: userData.gender,
+      phoneNumber: userData.phoneNumber,
+      privacySettings: userData.privacySettings,
     };
 
     let roleData = null;
+    let channels = null;
 
     if (userData.role === "Squire") {
-      const squireData = await Squire.findOne({ user: userData.id });
+      const squireData = await Squire.findOne({ user: userData._id });
       if (squireData) {
         roleData = {
           squireId: squireData.id,
@@ -258,13 +293,17 @@ export const getUserInfo = async (request, response, next) => {
           address: squireData.address,
           achievements: squireData.achievements,
           buddies: squireData.buddies,
+          groups: squireData.groups,
         };
       }
     } else if (userData.role === "Knight") {
       const knightData = await Knight.findOne({ user: userData.id });
+      channels = await Channel.find({ admin: userData._id });
       if (knightData) {
         roleData = {
+          knightId: knightData._id,
           achievements: knightData.achievements,
+          qualifications: knightData.qualifications,
           groups: knightData.groups,
           reels: knightData.reels,
         };
@@ -273,14 +312,15 @@ export const getUserInfo = async (request, response, next) => {
 
     return response.status(200).json({
       user: userResponse,
-      ...(userData.role === "Squire" ? { squire: roleData } : { knight: roleData }),
+      ...(userData.role === "Squire"
+        ? { squire: roleData }
+        : { knight: roleData, channels:  channels  }),
     });
   } catch (error) {
     console.error("Error fetching user info:", error);
     return response.status(500).send("Internal Server Error");
   }
 };
-
 
 export const updateProfile = async (request, response) => {
   try {
@@ -300,11 +340,16 @@ export const updateProfile = async (request, response) => {
       location,
       address,
       achievements,
+      qualifications,
+      phoneNumber,
+      privacySettings,
     } = request.body;
 
     // Validate required fields
     if (!firstName || !lastName) {
-      return response.status(400).json({ message: "First and last name are required." });
+      return response
+        .status(400)
+        .json({ message: "First and last name are required." });
     }
 
     // Update User Data
@@ -319,16 +364,22 @@ export const updateProfile = async (request, response) => {
     user.gender = gender;
     user.shortDescription = shortDescription;
     user.profileSetup = true; // Mark profile as set up
+    user.privacySettings = privacySettings;
+    user.phoneNumber = phoneNumber;
+
     await user.save();
 
     let squireData = null;
+    let knightData = null;
 
     // Check if the user is a Squire and update their Squire data
     if (user.role === "Squire") {
       squireData = await Squire.findOne({ user: userId });
 
       if (!squireData) {
-        return response.status(404).json({ message: "Squire profile not found." });
+        return response
+          .status(404)
+          .json({ message: "Squire profile not found." });
       }
 
       squireData.fitnessLevel = fitnessLevel;
@@ -342,8 +393,20 @@ export const updateProfile = async (request, response) => {
       squireData.achievements = achievements;
 
       await squireData.save();
-    }
+    } else if (user.role === "Knight") {
+      knightData = await Knight.findOne({ user: userId });
 
+      if (!knightData) {
+        return response
+          .status(404)
+          .json({ message: "Knight profile not found." });
+      }
+
+      knightData.achievements = achievements;
+      knightData.qualifications = qualifications;
+
+      await knightData.save();
+    }
     // Response
     return response.status(200).json({
       message: "Profile updated successfully.",
@@ -354,39 +417,56 @@ export const updateProfile = async (request, response) => {
         lastName: user.lastName,
         gender: user.gender,
         age: user.age,
+        role: user.role,
         shortDescription: user.shortDescription,
         profileSetup: user.profileSetup,
+        phoneNumber: user.phoneNumber,
+        privacySettings: user.privacySettings,
+        image: user.image,
       },
       squire: squireData
         ? {
-            fitnessLevel: squireData.fitnessLevel.map(({ value, label }) => ({
-            value,
-            label,
-          })),
-            availableDays: squireData.availableDays.map(({ value, label }) => ({
-            value,
-            label,
-          })),
-            buddyType: squireData.buddyType.map(({ value, label }) => ({
-            value,
-            label,
-          })),
-            FitnessGoals: squireData.FitnessGoals.map(({ value, label }) => ({
-            value,
-            label,
-          })),
-            Preferences: squireData.Preferences.map(({ value, label }) => ({
-            value,
-            label,
-          })),
-          availability: squireData.availability.map(({ value, label }) => ({
-            value,
-            label,
-          })),
-          
+            squireId: squireData._id,
+            fitnessLevel: squireData.fitnessLevel?.map(({ value, label }) => ({
+              value,
+              label,
+            })),
+            availableDays: squireData.availableDays?.map(
+              ({ value, label }) => ({
+                value,
+                label,
+              })
+            ),
+            buddyType: squireData.buddyType?.map(({ value, label }) => ({
+              value,
+              label,
+            })),
+            FitnessGoals: squireData.FitnessGoals?.map(({ value, label }) => ({
+              value,
+              label,
+            })),
+            Preferences: squireData.Preferences?.map(({ value, label }) => ({
+              value,
+              label,
+            })),
+            availability: squireData.availability?.map(({ value, label }) => ({
+              value,
+              label,
+            })),
+
             location: squireData.location,
             address: squireData.address,
             achievements: squireData.achievements,
+            buddies: squireData.buddies,
+            groups: squireData.groups,
+          }
+        : null,
+      knight: knightData
+        ? {
+            knightId: knightData._id,
+            achievements: knightData.achievements,
+            qualifications: knightData.qualifications,
+            groups: knightData.groups,
           }
         : null,
     });
@@ -396,46 +476,112 @@ export const updateProfile = async (request, response) => {
   }
 };
 
+export const updateGroupInfo = async (req, res) => {
+  try {
+    const { group } = req.body;
+
+    if (!group || !group._id) {
+      return res.status(400).json({ message: "Invalid group data provided." });
+    }
+
+    const channel = await Channel.findById(group._id);
+    if (!channel) {
+      return res.status(404).json({ message: "Channel not found." });
+    }
+
+    // Update the channel properties
+    channel.activityType = group.activityType;
+    channel.address = group.address;
+    channel.description = group.description;
+    channel.image = group.image;
+    channel.name = group.name;
+    channel.schedule = group.schedule;
+
+    // Save updated channel to the database
+    await channel.save();
+
+    return res.status(200).json({ message: "Group updated successfully." });
+  } catch (error) {
+    console.error("ERROR", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 export const addBuddyToSquire = async (req, res) => {
   try {
     const { squireId, buddyId } = req.body;
 
-    // Validate the input
+    // Ensure both IDs are provided
     if (!squireId || !buddyId) {
       return res.status(400).json({ message: "Squire ID and Buddy ID are required." });
     }
 
-    // Check if the buddy exists
+    // Check if buddy exists
     const buddyExists = await User.findById(buddyId);
     if (!buddyExists) {
       return res.status(404).json({ message: "Buddy not found." });
     }
 
-    // Find the squire
+    // Find the squire and update
     const squire = await Squire.findById(squireId);
     if (!squire) {
       return res.status(404).json({ message: "Squire not found." });
     }
 
-    // Check if the buddy is already in the list
     if (squire.buddies.includes(buddyId)) {
       return res.status(400).json({ message: "Buddy is already added." });
     }
 
-    // Add the buddy to the list
     squire.buddies.push(buddyId);
-
-    // Save the squire document
     await squire.save();
 
     return res.status(200).json({
+      message: "Buddy added successfully.",
       buddies: squire.buddies,
     });
+
   } catch (error) {
     console.error("Error adding buddy:", error);
     return res.status(500).json({ message: "Internal server error." });
   }
 };
+
+
+export const addGroupProfileImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).send("File is required.");
+    }
+
+    const { channelId } = req.body;
+    if (!channelId) {
+      return res.status(400).send("Channel ID is required.");
+    }
+
+    // Construct the new filename and move the file
+    const date = Date.now();
+    let fileName = `uploads/profiles/${date}-${req.file.originalname}`;
+
+    renameSync(req.file.path, fileName);
+
+    // Save the image path to the database
+    const updatedChannel = await Channel.findByIdAndUpdate(
+      channelId,
+      { image: fileName },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedChannel) {
+      return res.status(404).send("Channel not found.");
+    }
+
+    res.status(200).json({
+      image: updatedChannel.image,
+    });
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    res.status(500).send("Internal Server Error");
+  }}
 
 
 export const addProfileImage = async (request, response, next) => {
@@ -449,13 +595,13 @@ export const addProfileImage = async (request, response, next) => {
 
     renameSync(request.file.path, fileName);
 
-    const updatedUser = await User.findByIdAndUpdate(
+    const updatedChannel = await User.findByIdAndUpdate(
       request.userId,
       { image: fileName },
       { new: true, runValidators: true }
     );
     return response.status(200).json({
-      image: updatedUser.image,
+      image: updatedChannel.image,
     });
   } catch (error) {
     console.log({ error });
@@ -474,6 +620,25 @@ export const removeProfileImage = async (request, response, next) => {
 
     user.image = null;
     await user.save();
+
+    return response.status(200).send("Profile image removed successfully");
+  } catch (error) {
+    console.log({ error });
+    return response.status(500).send("Internal Server Error");
+  }
+};
+
+export const removeGroupProfileImage = async (request, response, next) => {
+  try {
+    const { channelId } = request.body;
+    const channel = await Channel.findById(channelId);
+
+    if (!channel) {
+      unlinkSync(channel.image);
+    }
+
+    channel.image = null;
+    await channel.save();
 
     return response.status(200).send("Profile image removed successfully");
   } catch (error) {

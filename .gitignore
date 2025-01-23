@@ -2,3 +2,17 @@ client/.env
 server/.env
 client/.env
 server/.env
+server/node_modules/.package-lock.json
+server/node_modules/mongoose/package.json
+server/node_modules/mongoose/dist/browser.umd.js
+server/node_modules/mongoose/lib/document.js
+server/node_modules/mongoose/lib/model.js
+server/node_modules/mongoose/lib/helpers/populate/getModelsMapForPopulate.js
+server/node_modules/mongoose/lib/schema/bigint.js
+server/node_modules/mongoose/lib/schema/boolean.js
+server/node_modules/mongoose/lib/schema/documentArray.js
+server/node_modules/mongoose/lib/schema/int32.js
+server/node_modules/mongoose/lib/schema/subdocument.js
+server/node_modules/mongoose/types/index.d.ts
+server/node_modules/mongoose/types/models.d.ts
+server/node_modules/mongoose/types/query.d.ts

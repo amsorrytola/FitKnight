@@ -17,7 +17,11 @@ const userSchema = new mongoose.Schema({
   shortDescription: { type: String },
   assignedCharacter: {
     type: String,
-    
+  },
+  phoneNumber: { type: String },
+  privacySettings: {
+    emailVisible: { type: Boolean, default: false },
+    phoneVisible: { type: Boolean, default: false },
   },
   
 });

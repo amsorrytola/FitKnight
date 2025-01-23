@@ -17,7 +17,7 @@ export const useSocket = () => {
 
 export const SocketProvider = ({ children }) => {
   const socket = useRef(null); // Ref for socket instance
-  const { userInfo, addNotification } = useAppStore(); // State from store
+  const { userInfo, addNotification,setSocket } = useAppStore(); // State from store
 
   useEffect(() => {
     if (userInfo) {
@@ -58,6 +58,7 @@ export const SocketProvider = ({ children }) => {
       socket.current.on("receiveMessage", handleReceivedMessage);
       socket.current.on("notification", handleNotification);
 
+      setSocket(socket); 
       return () => {
         socket.current.disconnect();
       };

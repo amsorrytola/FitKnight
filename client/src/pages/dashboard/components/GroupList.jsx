@@ -1,34 +1,49 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef } from "react";
 import GroupCard from "./GroupCard";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const GroupList = ({ groups, loading, fetchMoreGroups }) => {
   const scrollRef = useRef(null);
 
-  // Check if the user has scrolled near the end
-  const handleScroll = () => {
-    const container = scrollRef.current;
-    if (container) {
-      const scrollLeft = container.scrollLeft;
-      const scrollWidth = container.scrollWidth;
-      const clientWidth = container.clientWidth;
-
-      // Trigger fetch if scrolled near the end
-      if (scrollWidth - scrollLeft - clientWidth < 100) {
-        fetchMoreGroups();
-      }
-    }
-  };
-
   return (
-    <div
-      ref={scrollRef}
-      onScroll={handleScroll}
-      className="flex overflow-x-auto space-x-4 p-4 scrollbar-hide"
-      style={{ scrollBehavior: "smooth" }}
-    >
-      {loading
-        ? Array.from({ length: 6 }).map((_, idx) => <GroupCard key={idx} loading={true} />)
-        : groups.map((group) => <GroupCard key={group.id} group={group} loading={false} />)}
+    <div className="w-[100%] h-[450px] overflow-hidden flex items-center justify-center">
+      <Carousel
+        opts={{
+          align: "start",
+           // Enable looping for smooth experience
+          duration: 20, // Smooth sliding
+        }}
+        className="w-[92%]"
+      >
+        <CarouselContent>
+          {loading
+            ? Array.from({ length: 6 }).map((_, index) => (
+                <CarouselItem
+                  key={index}
+                  className="md:basis-1/2 lg:basis-1/5"
+                >
+                  <div className="p-1">
+                    <GroupCard key={index} loading={true} />
+                  </div>
+                </CarouselItem>
+              ))
+            : groups.map((group, index) => (
+                <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/5">
+                  <div className="">
+                    <GroupCard key={group._id} group={group} loading={false} />
+                  </div>
+                </CarouselItem>
+              ))}
+        </CarouselContent>
+        <CarouselPrevious />
+        <CarouselNext />
+      </Carousel>
     </div>
   );
 };

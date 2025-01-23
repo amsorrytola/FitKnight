@@ -2,7 +2,7 @@ import Batgirl from "../../assets/Gotham-Knights-Batgirl-Gameplay-Trailer-Comic-
 import Shadow from "../../assets/Shadow.jpg";
 import Robin from "../../assets/robin.avif";
 import Renne from "../../assets/Renne.webp";
-import RedHood from "../../assets/Red Hood.avif";
+import RedHood from "../../assets/red-hood-gotham-knights.avif";
 import Penguin from "../../assets/Penguin.webp";
 import Owl from "../../assets/Owl.avif";
 import Nightwing from "../../assets/Nightwing.avif";

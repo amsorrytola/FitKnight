@@ -19,6 +19,8 @@ const channelSchema = new mongoose.Schema({
     default: Date.now(),
   },
 
+  image: { type: String },
+
   description: { type: String, required: false },
   activityType: [{ value: { type: String }, label: { type: String } }],
   schedule: [{ value: { type: String }, label: { type: String } }],

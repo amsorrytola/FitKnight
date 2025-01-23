@@ -2,37 +2,32 @@ import mongoose from "mongoose";
 import Channel from "../models/ChannelModel.js";
 import User from "../models/UserModel.js";
 import Message from "../models/MessageModel.js";
+import Squire from "../models/SquireModel.js";
 
-export const createChannel = async (request, response, next) => {
+export const createChannel = async (req, res, next) => {
   try {
-    const { name, members } = request.body;
-    const userId = request.userId;
-
-    const admin = await User.findById(userId);
+    const { name, admin } = req.body;
 
     if (!admin) {
-      return response.status(400).send("Admin user not found.");
+      return res.status(400).json({ message: "Admin user ID is required." });
     }
 
-    const validMembers = await User.find({ _id: { $in: members } });
-
-    if (validMembers.length !== members.length) {
-      return response.status(400).send("Some members are not valid users.");
-    }
+    
 
     const newChannel = new Channel({
       name,
-      members,
-      admin: userId,
+      image: "",
+      admin: admin,
     });
 
     await newChannel.save();
-    return response.status(201).json({ channel: newChannel });
+    return res.status(201).json({ channel: newChannel });
   } catch (error) {
-    console.log(error);
-    return response.status(500).send("Internal Server Error");
+    console.error("Error creating channel:", error);
+    return res.status(500).send("Internal Server Error");
   }
 };
+
 
 export const getUserChannels = async (request, response, next) => {
   try {
@@ -69,3 +64,34 @@ export const getChannelMessages = async (request, response, next) => {
     return response.status(500).send("Internal Server Error");
   }
 };
+
+export const addMemberToChannel = async (req, res) => {
+  try {
+    const { channelId, memberId } = req.body;
+
+    // Find the channel by ID
+    const channel = await Channel.findById(channelId);
+    if (!channel) {
+      return res.status(404).send("Channel not found.");
+    }
+    const squire = await Squire.findOne({user:memberId});
+
+    // Add memberId to the members array if not already present
+    if (!channel.members.includes(memberId)) {
+      channel.members.push(memberId);
+      squire.groups.push(channelId);
+    } else {
+      return res.status(400).json({ message: "Member already exists in the channel." });
+    }
+
+    // Save the updated channel
+    await channel.save();
+    await squire.save();
+
+    return res.status(201).json({ channel });
+  } catch (error) {
+    console.error("ERROR", error);
+    return res.status(500).send("Internal Server Error");
+  }
+};
+

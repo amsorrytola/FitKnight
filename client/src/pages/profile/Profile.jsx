@@ -7,7 +7,7 @@ import { FaPlus, FaTrash } from "react-icons/fa";
 import { Input } from "../../components/ui/input";
 import { colors } from "../../lib/utils";
 import { Button } from "../../components/ui/button";
-import { toast } from "sonner";
+
 import { apiClient } from "../../lib/api-client";
 import { useNavigate } from "react-router-dom";
 import {
@@ -18,9 +18,10 @@ import {
 } from "../../utils/constants";
 import { useRef } from "react";
 import { predefinedOptions } from "../../utils/constants/predefinedOptions";
-
+import { toast } from "sonner";
 import Logo from "../../assets/Gotham_Knights_Logo.svg.png";
-
+import hide from "../../assets/hide.png";
+import eye from "../../assets/eye.png";
 import CreatableSelect from "react-select/creatable";
 import LocationPicker from "../../components/ui/LocationPicker.jsx";
 
@@ -58,11 +59,17 @@ function Profile() {
   const [selectedDays, setSelectedDays] = useState([]);
   const [selectedBuddyTypes, setSelectedBuddyTypes] = useState([]);
   const [achievements, setAchievements] = useState([]);
-    const [newAchievement, setNewAchievement] = useState({
-      title: "",
-      date: "",
-      description: "",
-    });
+  const [qualifications,setQualifications] = useState([]);
+  const [newQualifications, setNewQualifications] = useState({
+    title: "",
+    date: "",
+    description: "",
+  });
+  const [newAchievement, setNewAchievement] = useState({
+    title: "",
+    date: "",
+    description: "",
+  });
   const [selectedAge, setSelectedAge] = useState("");
   const [shortDescription, setShortDescription] = useState("");
   const [FitnessGoals, setFitnessGoals] = useState([]);
@@ -72,28 +79,42 @@ function Profile() {
   const [address, setAddress] = useState("");
   const [gender, setGender] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isQDialogOpen, setIsQDialogOpen] = useState(false);
+  const [group, setgroup] = useState(null);
+  const [reels, setreels] = useState([]);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [isEmailPrivate, setIsEmailPrivate] = useState(true);
+  const [isPhoneNumberPrivate, setIsPhoneNumberPrivate] = useState(true);
 
   useEffect(() => {
     console.log("USEEFFECTWALA", userInfo);
     console.log("USEEFFECTWALA SQUIRE", squireInfo);
-    if(squireInfo.FitnessGoals){
+    console.log("USEEFFECT WALA KNIGHT", knightInfo);
+    if (squireInfo?.FitnessGoals) {
       setFitnessGoals(squireInfo.FitnessGoals);
-    };
-    if(squireInfo.Preferences){
+    }
+    if (squireInfo?.Preferences) {
       setPreferences(squireInfo.Preferences);
-    };
-    if(squireInfo.availability){
+    }
+    if (squireInfo?.availability) {
       setavailability(squireInfo.availability);
-    };
-        
+    }
+    if (userInfo?.image) {
+      setimage(userInfo.image ? `${HOST}/${userInfo.image}` : "");
+    }
+
     if (userInfo.profileSetup) {
       setfirstName(userInfo.firstName);
       setlastName(userInfo.lastName);
       setcolor(userInfo.color);
+      
       setimage(userInfo.image ? `${HOST}/${userInfo.image}` : "");
       setSelectedAge(userInfo.age);
       setGender(userInfo.gender);
       setShortDescription(userInfo.shortDescription);
+      setPhoneNumber(userInfo.phoneNumber);
+      setIsEmailPrivate(userInfo.privacySettings.emailVisible);
+      setIsPhoneNumberPrivate(userInfo.privacySettings.phoneVisible);
 
       if (userInfo.role === "Squire" && squireInfo) {
         setFitnessLevel(squireInfo.fitnessLevel);
@@ -106,8 +127,9 @@ function Profile() {
         setAddress(squireInfo.address);
         setAchievements(squireInfo.achievements);
       } else if (userInfo.role === "Knight" && knightInfo) {
-        setAchievements(knightInfo.achievements );
-        setgroups(knightInfo.groups );
+        setAchievements(knightInfo.achievements);
+        setQualifications(knightInfo.qualifications);
+        setgroup(knightInfo.groups);
         setreels(knightInfo.reels);
       }
     }
@@ -125,9 +147,31 @@ function Profile() {
     return true;
   };
 
+  const getMimeType = (filename) => {
+    const extension = filename.split(".").pop().toLowerCase();
+    switch (extension) {
+      case "avif":
+        return "image/avif";
+      case "jpg":
+      case "jpeg":
+        return "image/jpeg";
+      case "png":
+        return "image/png";
+      case "webp":
+        return "image/webp";
+      default:
+        return "application/octet-stream"; // Fallback for unknown types
+    }
+  };
+
   const saveChanges = async () => {
     if (validateProfile()) {
       try {
+        const privacySettings = {
+          emailVisible: isEmailPrivate,
+          phoneVisible: isPhoneNumberPrivate,
+        };
+
         const response = await apiClient.post(
           UPDATE_PROFILE_ROUTE,
           {
@@ -145,6 +189,9 @@ function Profile() {
             location,
             address,
             achievements,
+            phoneNumber,
+            privacySettings,
+            qualifications,
           },
           { withCredentials: true }
         );
@@ -184,6 +231,7 @@ function Profile() {
     if (file) {
       const formData = new FormData();
       formData.append("profile-image", file);
+      console.log("formdata",formData);
       const response = await apiClient.post(ADD_PROFILE_IMAGE_ROUTE, formData, {
         withCredentials: true,
       });
@@ -212,12 +260,22 @@ function Profile() {
     setAchievements(updatedAchievements);
     console.log("Achievements updated:", updatedAchievements);
     console.log(achievements);
-    
+  };
+
+  const onQualificationsChange = (updatedQualifications) => {
+    setQualifications(updatedQualifications);
+    console.log("Qualification updated:", updatedQualifications);
+    console.log(qualifications);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewAchievement({ ...newAchievement, [name]: value });
+  };
+
+  const handleQualificationInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewQualifications({ ...newQualifications, [name]: value });
   };
 
   // Add a new achievement to the list
@@ -240,6 +298,25 @@ function Profile() {
     }
   };
 
+  const handleAddQualification = () => {
+    if (
+      newQualifications.title &&
+      newQualifications.date &&
+      newQualifications.description
+    ) {
+      const updatedQualifications = [...qualifications, newQualifications];
+      setQualifications(updatedQualifications);
+      setNewAchievement({ title: "", date: "", description: "" });
+
+      // Notify parent component if handler is provided
+      if (typeof onQualificationsChange === "function") {
+        onQualificationsChange(updatedQualifications);
+      }
+    } else {
+      alert("Please fill out all fields before adding an achievement.");
+    }
+  };
+
   // Remove an achievement by index
   const handleRemoveAchievement = (index) => {
     const updatedAchievements = achievements.filter((_, i) => i !== index);
@@ -248,6 +325,16 @@ function Profile() {
     // Notify parent component if handler is provided
     if (typeof onAchievementsChange === "function") {
       onAchievementsChange(updatedAchievements);
+    }
+  };
+
+  const handleRemoveQualification = (index) => {
+    const updatedQualifications = qualifications.filter((_, i) => i !== index);
+    setQualifications(updatedQualifications);
+
+    // Notify parent component if handler is provided
+    if (typeof onQualificationsChange === "function") {
+      onQualificationsChange(updatedQualifications);
     }
   };
 
@@ -366,7 +453,7 @@ function Profile() {
           </div>
 
           <div className="flex min-w-32 md:min-w-64 flex-col gap-5 text-white item-center justify-center">
-            <div className="w-full">
+            <div className="w-full flex space-x-3">
               <Input
                 placeholder="Email"
                 type="email"
@@ -374,6 +461,65 @@ function Profile() {
                 value={userInfo.email}
                 className="rounded-lg p-6 bg-[#2c2e3b] border-none"
               />
+              {isEmailPrivate ? (
+                <img
+                  src={hide}
+                  alt=""
+                  className="absolute top-[215px] right-[39%] h-[25px] w-[25px] hover:outline-none hover:ring-2 hover:ring-purple-500 hover:border-transparent rounded-full"
+                  onClick={() => {
+                    setIsEmailPrivate((prev) => !prev);
+                    toast.message("Other Users can see your Email Now");
+                  }}
+                />
+              ) : (
+                <img
+                  src={eye}
+                  alt=""
+                  className="absolute top-[215px] right-[39%] h-[25px] w-[25px] hover:outline-none hover:ring-2 hover:ring-purple-500 hover:border-transparent rounded-full"
+                  onClick={() => {
+                    setIsEmailPrivate((prev) => !prev);
+                    toast.message("Other Users can't see your Email Now");
+                  }}
+                />
+              )}
+              <Input
+                placeholder="Phone Number"
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => {
+                  const input = e.target.value;
+                  if (/^\d*$/.test(input)) {
+                    // Allow only digits (0-9)
+                    setPhoneNumber(input);
+                  } else {
+                    toast.error("Input must be a number");
+                  }
+                }}
+                className="rounded-lg p-6 bg-[#2c2e3b] border-none"
+              />
+              {isPhoneNumberPrivate ? (
+                <img
+                  src={hide}
+                  alt=""
+                  className="absolute top-[215px] right-[26%] h-[25px] w-[25px] hover:outline-none hover:ring-2 hover:ring-purple-500 hover:border-transparent rounded-full"
+                  onClick={() => {
+                    setIsPhoneNumberPrivate((prev) => !prev);
+                    toast.message("Other Users can see your Phone Number Now");
+                  }}
+                />
+              ) : (
+                <img
+                  src={eye}
+                  alt=""
+                  className="absolute top-[215px] right-[26%] h-[25px] w-[25px] hover:outline-none hover:ring-2 hover:ring-purple-500 hover:border-transparent rounded-full"
+                  onClick={() => {
+                    setIsPhoneNumberPrivate((prev) => !prev);
+                    toast.message(
+                      "Other Users can't see your Phone Number Now"
+                    );
+                  }}
+                />
+              )}
             </div>
             <div className="w-full flex space-x-4">
               <input
@@ -399,7 +545,7 @@ function Profile() {
                   const age = e.target.value;
                   setSelectedAge(age);
                 }}
-                className="w-full border border-gray-300 text-white  focus:outline-none focus:ring-4 focus:ring-purple-500 focus:border-transparent shadow-sm hover:shadow-lg transition duration-200 rounded-lg p-3.5 bg-[#2c2e3b] "
+                className="w-full border border-gray-300 text-white focus:outline-none focus:ring-4 focus:ring-purple-500 focus:border-transparent shadow-sm hover:shadow-lg transition duration-200 rounded-lg p-3.5 bg-[#2c2e3b]"
               >
                 <option value="" disabled>
                   Choose your age
@@ -410,13 +556,14 @@ function Profile() {
                   </option>
                 ))}
               </select>
+
               <select
                 id="gender"
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
-                className="w-full border border-gray-300 text-white  focus:outline-none focus:ring-4 focus:ring-purple-500 focus:border-transparent shadow-sm hover:shadow-lg transition duration-200 rounded-lg p-3.5 bg-[#2c2e3b]"
+                className="w-full border border-gray-300 text-white focus:outline-none focus:ring-4 focus:ring-purple-500 focus:border-transparent shadow-sm hover:shadow-lg transition duration-200 rounded-lg p-3.5 bg-[#2c2e3b]"
               >
-                <option value="" disabled selected>
+                <option value="" disabled>
                   Select Gender
                 </option>
                 <option value="Male">Male</option>
@@ -435,11 +582,45 @@ function Profile() {
                       key={index}
                       className="flex items-center justify-center "
                     >
-                      <Card className="h-[100%] w-[50%] bg-white shadow-lg rounded-3xl ">
+                      <Card className="h-[100%] w-[70%] bg-white shadow-lg rounded-3xl ">
                         <img
                           src={character.image}
                           alt={character.name}
-                          className="w-full h-[150px]  object-cover rounded-t-3xl"
+                          className="w-full h-[220px]  object-cover rounded-t-3xl"
+                          onClick={async () => {
+                            await handleDeleteImage();
+                            const response = await fetch(character.image);
+                            const blob = await response.blob();
+                            const mimeType = getMimeType(character.image);
+
+                            const file = new File(
+                              [blob],
+                              character.image.split("/").pop(),
+                              { type: mimeType }
+                            );
+
+                            if (file) {
+                              const formData = new FormData();
+                              formData.append("profile-image", file);
+                              const response = await apiClient.post(
+                                ADD_PROFILE_IMAGE_ROUTE,
+                                formData,
+                                {
+                                  withCredentials: true,
+                                }
+                              );
+                              if (
+                                response.status === 200 &&
+                                response.data.image
+                              ) {
+                                setUserInfo({
+                                  ...userInfo,
+                                  image: response.data.image,
+                                });
+                                toast.success("Image updated successfully");
+                              }
+                            }
+                          }}
                         />
                         <CardContent className="rounded-b-3xl h-[30px] border-black border-2 text-center bg-gradient-to-r from-purple-600 to-indigo-500 text-white">
                           <p className="text-xl font-bold">{character.name}</p>
@@ -455,7 +636,7 @@ function Profile() {
               </Carousel>
             </div>
 
-            <div className="flex space-x-3 w-full">
+            {/* <div className="flex space-x-3 w-full">
               <Button
                 className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-semibold rounded-full w-full h-[50px]  hover:from-purple-700 hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 text-lg 
                   shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105    p-2"
@@ -468,7 +649,7 @@ function Profile() {
               >
                 Let Ai Select For You
               </Button>
-            </div>
+            </div> */}
           </div>
         </div>
         {userInfo.role === "Squire" ? (
@@ -579,83 +760,88 @@ function Profile() {
                       Open To Add Achievements
                     </DialogTrigger>
                     <DialogContent>
-                    <div>
-      <h2 className="text-lg font-semibold text-gray-800 mb-4">Achievements</h2>
+                      <div>
+                        <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                          Achievements
+                        </h2>
 
-      {/* Input Fields for Adding New Achievement */}
-      <div className="flex flex-col space-y-4 mb-4">
-        <input
-          type="text"
-          name="title"
-          value={newAchievement.title}
-          onChange={handleInputChange}
-          placeholder="Achievement Title"
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
-        />
-        <input
-          type="date"
-          name="date"
-          value={newAchievement.date}
-          onChange={handleInputChange}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
-        />
-        <textarea
-          name="description"
-          value={newAchievement.description}
-          onChange={handleInputChange}
-          placeholder="Achievement Description"
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
-        ></textarea>
-        <button
-          onClick={handleAddAchievement}
-          className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition duration-200"
-        >
-          Add Achievement
-        </button>
-      </div>
+                        {/* Input Fields for Adding New Achievement */}
+                        <div className="flex flex-col space-y-4 mb-4">
+                          <input
+                            type="text"
+                            name="title"
+                            value={newAchievement.title}
+                            onChange={handleInputChange}
+                            placeholder="Achievement Title"
+                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                          />
+                          <input
+                            type="date"
+                            name="date"
+                            value={newAchievement.date}
+                            onChange={handleInputChange}
+                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                          />
+                          <textarea
+                            name="description"
+                            value={newAchievement.description}
+                            onChange={handleInputChange}
+                            placeholder="Achievement Description"
+                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                          ></textarea>
+                          <button
+                            onClick={handleAddAchievement}
+                            className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition duration-200"
+                          >
+                            Add Achievement
+                          </button>
+                        </div>
 
-      {/* Display List of Achievements */}
-      <div className="space-y-4">
-        {achievements.length > 0 ? (
-          achievements.map((achievement, index) => (
-            <div
-              key={index}
-              className="p-4 bg-white border border-gray-300 rounded-lg shadow-sm flex justify-between items-center"
-            >
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700">
-                  {achievement.title}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {new Date(achievement.date).toLocaleDateString()}
-                </p>
-                <p className="text-sm text-gray-600">
-                  {achievement.description}
-                </p>
-              </div>
-              <button
-                onClick={() => handleRemoveAchievement(index)}
-                className="px-2 py-1 bg-red-500 text-white text-xs rounded-lg hover:bg-red-600 transition duration-200"
-              >
-                Remove
-              </button>
-            </div>
-          ))
-        ) : (
-          <p className="text-sm text-gray-500">No achievements added yet.</p>
-        )
-        }
-        <button
-          onClick={()=>{setAchievements(achievements);
-            setIsDialogOpen(false);
-          }}
-          className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition duration-200"
-        >
-          Submit Achievements
-        </button>
-      </div>
-    </div>
-
+                        {/* Display List of Achievements */}
+                        <div className="space-y-4">
+                          {achievements.length > 0 ? (
+                            achievements.map((achievement, index) => (
+                              <div
+                                key={index}
+                                className="p-4 bg-white border border-gray-300 rounded-lg shadow-sm flex justify-between items-center"
+                              >
+                                <div>
+                                  <h3 className="text-sm font-semibold text-gray-700">
+                                    {achievement.title}
+                                  </h3>
+                                  <p className="text-sm text-gray-500">
+                                    {new Date(
+                                      achievement.date
+                                    ).toLocaleDateString()}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    {achievement.description}
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={() => handleRemoveAchievement(index)}
+                                  className="px-2 py-1 bg-red-500 text-white text-xs rounded-lg hover:bg-red-600 transition duration-200"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-sm text-gray-500">
+                              No achievements added yet.
+                            </p>
+                          )}
+                          <button
+                            onClick={() => {
+                              setAchievements(achievements);
+                              setIsDialogOpen(false);
+                            }}
+                            className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition duration-200"
+                          >
+                            Submit Achievements
+                          </button>
+                        </div>
+                      </div>
                     </DialogContent>
                   </Dialog>
                 </div>
@@ -663,7 +849,204 @@ function Profile() {
             </div>
           </>
         ) : (
-          <></>
+          <>
+            <div className="flex space-x-6 mt-5 ">
+              <div className="w-[50%] flex justify-center">
+                <Dialog open={isQDialogOpen} onOpenChange={setIsQDialogOpen}>
+                  <DialogTrigger
+                    className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-semibold rounded-full w-full h-[50px]  hover:from-purple-700 hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2  
+                  shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 p-2"
+                  >
+                    Open To Add Qualifications
+                  </DialogTrigger>
+                  <DialogContent>
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                      Qualifications
+                      </h2>
+
+                      {/* Input Fields for Adding New Achievement */}
+                      <div className="flex flex-col space-y-4 mb-4">
+                        <input
+                          type="text"
+                          name="title"
+                          value={newQualifications.title}
+                          onChange={handleQualificationInputChange}
+                          placeholder="Qualification Title"
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                        />
+                        <input
+                          type="date"
+                          name="date"
+                          value={newQualifications.date}
+                          onChange={handleQualificationInputChange}
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                        />
+                        <textarea
+                          name="description"
+                          value={newQualifications.description}
+                          onChange={handleQualificationInputChange}
+                          placeholder="Qualification Description"
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                        ></textarea>
+                        <button
+                          onClick={handleAddQualification}
+                          className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition duration-200"
+                        >
+                          Add Qualification
+                        </button>
+                      </div>
+
+                      {/* Display List of Qualifications */}
+                      <div className="space-y-4">
+                        {qualifications?.length > 0 ? (
+                          qualifications.map((qualification, index) => (
+                            <div
+                              key={index}
+                              className="p-4 bg-white border border-gray-300 rounded-lg shadow-sm flex justify-between items-center"
+                            >
+                              <div>
+                                <h3 className="text-sm font-semibold text-gray-700">
+                                  {qualification.title}
+                                </h3>
+                                <p className="text-sm text-gray-500">
+                                  {new Date(
+                                    qualification.date
+                                  ).toLocaleDateString()}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {qualification.description}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => handleRemoveQualification(index)}
+                                className="px-2 py-1 bg-red-500 text-white text-xs rounded-lg hover:bg-red-600 transition duration-200"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            No Qualifications added yet.
+                          </p>
+                        )}
+                        <button
+                          onClick={() => {
+                            setQualifications(qualifications);
+                            setIsQDialogOpen(false);
+                          }}
+                          className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition duration-200"
+                        >
+                          Submit Qualifications
+                        </button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              <div className="w-[50%] flex justify-center">
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger
+                    className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-semibold rounded-full w-full h-[50px]  hover:from-purple-700 hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2  
+                  shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 p-2"
+                  >
+                    Open To Add Achievements
+                  </DialogTrigger>
+                  <DialogContent>
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                        Achievements
+                      </h2>
+
+                      {/* Input Fields for Adding New Achievement */}
+                      <div className="flex flex-col space-y-4 mb-4">
+                        <input
+                          type="text"
+                          name="title"
+                          value={newAchievement.title}
+                          onChange={handleInputChange}
+                          placeholder="Achievement Title"
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                        />
+                        <input
+                          type="date"
+                          name="date"
+                          value={newAchievement.date}
+                          onChange={handleInputChange}
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                        />
+                        <textarea
+                          name="description"
+                          value={newAchievement.description}
+                          onChange={handleInputChange}
+                          placeholder="Achievement Description"
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                        ></textarea>
+                        <button
+                          onClick={handleAddAchievement}
+                          className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition duration-200"
+                        >
+                          Add Achievement
+                        </button>
+                      </div>
+
+                      {/* Display List of Achievements */}
+                      <div className="space-y-4">
+                        {achievements.length > 0 ? (
+                          achievements.map((achievement, index) => (
+                            <div
+                              key={index}
+                              className="p-4 bg-white border border-gray-300 rounded-lg shadow-sm flex justify-between items-center"
+                            >
+                              <div>
+                                <h3 className="text-sm font-semibold text-gray-700">
+                                  {achievement.title}
+                                </h3>
+                                <p className="text-sm text-gray-500">
+                                  {new Date(
+                                    achievement.date
+                                  ).toLocaleDateString()}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {achievement.description}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => handleRemoveAchievement(index)}
+                                className="px-2 py-1 bg-red-500 text-white text-xs rounded-lg hover:bg-red-600 transition duration-200"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            No achievements added yet.
+                          </p>
+                        )}
+                        <button
+                          onClick={() => {
+                            setAchievements(achievements);
+                            setIsDialogOpen(false);
+                          }}
+                          className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition duration-200"
+                        >
+                          Submit Achievements
+                        </button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
+
+            <hr className="mt-5" />
+            <div className="font-sans text-lg text-white flex justify-center items-center h-[20%]">
+              IMPLEMENT REELS
+            </div>
+          </>
         )}
         <div className="w-full flex justify-center mt-12">
           <Button

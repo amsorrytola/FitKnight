@@ -18,6 +18,7 @@ import { apiClient } from "../../lib/api-client";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
   DialogTrigger,
 } from "../../components/ui/dialog";
 import BuddyList from "./components/BuddyList";
@@ -26,7 +27,9 @@ import Notifications from "./components/Notifications";
 import {
   GET_RECOMMENDED_BUDDIES,
   GET_ALL_NOTIFICATIONS,
+  GET_RECOMMENDED_GROUPS,
 } from "../../utils/constants";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 function Dashboard() {
   const {
@@ -69,9 +72,30 @@ function Dashboard() {
     }
   };
 
+  const fetchGroups = async () => {
+    try {
+      setLoadingGroups(true);
+      const response = await apiClient.get(GET_RECOMMENDED_GROUPS, {
+        params: { page: groupPage, limit: 5 },
+        withCredentials: true,
+      });
+      console.log("LO JI GROUPS", response);
+      setGroups((prev) => [...prev, ...response.data]);
+      console.log("LO GROUPS", groups);
+    } catch (error) {
+      console.error("ERROR fetching groups:",error)
+    }finally{
+      setLoadingGroups(false);
+    }
+  };
+
   useEffect(() => {
     fetchBuddies();
   }, [buddyPage]);
+
+  useEffect(() => {
+    fetchGroups();
+  }, [groupPage]);
 
   // Fetch notifications on load
   useEffect(() => {
@@ -92,31 +116,17 @@ function Dashboard() {
     fetchNotifications();
   }, [addNotification, setUnreadCount]);
 
-  // Fetch initial groups
-  // useEffect(() => {
-  //   const fetchInitialGroups = async () => {
-  //     try {
-  //       setLoadingGroups(true);
-  //       const response = await apiClient.get(`/api/groups?page=${groupPage}`);
-  //       setGroups((prev) => [...prev, ...response.data]);
-  //     } catch (error) {
-  //       console.error("Error fetching groups:", error);
-  //     } finally {
-  //       setLoadingGroups(false);
-  //     }
-  //   };
 
-  //   fetchInitialGroups();
-  // }, [groupPage]);
 
   const fetchMoreBuddies = () => {
     setBuddyPage((prev) => prev + 1);
     console.log("BUDDYPAGE", buddyPage);
   };
 
-  // const fetchMoreGroups = () => {
-  //   setGroupPage((prev) => prev + 1);
-  // };
+  const fetchMoreGroups = () => {
+    setGroupPage((prev) => prev + 1);
+    console.log("GROUPPAGE",groupPage);
+  };
   const logOut = async () => {
     try {
       const response = await apiClient.post(
@@ -132,7 +142,7 @@ function Dashboard() {
       console.log(error);
     }
   };
-  console.log("LO BUDDIES", buddies);
+  console.log("LO JI BUDDIES", buddies);
   return (
     <div className="bg-[#1b1c24] w-screen h-screen flex flex-col items-center ">
       <div className="w-[100%] h-[10%] border-b-4 border-purple-500 flex justify-between items-center p-1">
@@ -196,6 +206,9 @@ function Dashboard() {
           </TooltipProvider>
 
           <Dialog open={isNotificatioOpen} onOpenChange={setIsNotificatioOpen}>
+            <VisuallyHidden>
+              <DialogTitle></DialogTitle>
+            </VisuallyHidden>
             <DialogContent className="max-w-lg rounded-lg shadow-xl">
               <Notifications />
             </DialogContent>
@@ -260,27 +273,31 @@ function Dashboard() {
           </TooltipProvider>
         </div>
       </div>
+
       <div className="h-[45%] w-[97%] border-b-2 border-gray-500 flex flex-col p-2 items-center">
         <div className="h-[15%] w-full border-b-4 border-gray-600 flex justify-between items-center  bg-[#1b1c24] shadow-md">
           {/* Heading */}
           <h1 className="text-[60px] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-500 drop-shadow-md">
             Buddies
           </h1>
-                <div className="flex space-x-2">
-          {/* Advanced Search Button */}
-          <Dialog>
-            <DialogTrigger className="flex items-center justify-center px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-bold text-lg rounded-full hover:from-purple-700 hover:to-indigo-600 focus:outline-none focus:ring-4 focus:ring-purple-500 focus:ring-offset-2 shadow-xl transition-all duration-300 ease-in-out transform hover:scale-110">
-              Advanced Search
-            </DialogTrigger>
-            <DialogContent className="h-[80%] bg-[#2c2f3a] rounded-lg p-4 shadow-lg">
-              {/* Add your advanced search form or content here */}
-            </DialogContent>
-          </Dialog>
+          <div className="flex space-x-2">
+            {/* Advanced Search Button */}
+            <Dialog>
+              <DialogTrigger className="flex items-center justify-center px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-bold text-lg rounded-full hover:from-purple-700 hover:to-indigo-600 focus:outline-none focus:ring-4 focus:ring-purple-500 focus:ring-offset-2 shadow-xl transition-all duration-300 ease-in-out transform hover:scale-110">
+                Advanced Search
+              </DialogTrigger>
+              <DialogContent className="h-[80%] bg-[#2c2f3a] rounded-lg p-4 shadow-lg">
+                {/* Add your advanced search form or content here */}
+              </DialogContent>
+            </Dialog>
 
-          <button className="flex items-center justify-center px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-bold text-lg rounded-full hover:from-purple-700 hover:to-indigo-600 focus:outline-none focus:ring-4 focus:ring-purple-500 focus:ring-offset-2 shadow-xl transition-all duration-300 ease-in-out transform hover:scale-110"
-          onClick={fetchMoreBuddies}>Recommend More</button>
+            <button
+              className="flex items-center justify-center px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-bold text-lg rounded-full hover:from-purple-700 hover:to-indigo-600 focus:outline-none focus:ring-4 focus:ring-purple-500 focus:ring-offset-2 shadow-xl transition-all duration-300 ease-in-out transform hover:scale-110"
+              onClick={fetchMoreBuddies}
+            >
+              Recommend More
+            </button>
           </div>
-          
         </div>
         <div className="w-full    flex items-center justify-center">
           <BuddyList
@@ -296,19 +313,27 @@ function Dashboard() {
           <h1 className="text-[60px] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-500 drop-shadow-md">
             Groups
           </h1>
+          <div className="flex space-x-2">
+            {/* Advanced Search Button */}
+            <Dialog>
+              <DialogTrigger className="flex items-center justify-center px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-bold text-lg rounded-full hover:from-purple-700 hover:to-indigo-600 focus:outline-none focus:ring-4 focus:ring-purple-500 focus:ring-offset-2 shadow-xl transition-all duration-300 ease-in-out transform hover:scale-110">
+                Advanced Search
+              </DialogTrigger>
+              <DialogContent className="h-[80%] bg-[#2c2f3a] rounded-lg p-4 shadow-lg">
+                {/* Add your advanced search form or content here */}
+              </DialogContent>
+            </Dialog>
 
-          {/* Advanced Search Button */}
-          <Dialog>
-            <DialogTrigger className="flex items-center justify-center px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-bold text-lg rounded-full hover:from-purple-700 hover:to-indigo-600 focus:outline-none focus:ring-4 focus:ring-purple-500 focus:ring-offset-2 shadow-xl transition-all duration-300 ease-in-out transform hover:scale-110">
-              Advanced Search
-            </DialogTrigger>
-            <DialogContent className="h-[80%] bg-[#2c2f3a] rounded-lg p-4 shadow-lg">
-              {/* Add your advanced search form or content here */}
-            </DialogContent>
-          </Dialog>
+            <button
+              className="flex items-center justify-center px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-bold text-lg rounded-full hover:from-purple-700 hover:to-indigo-600 focus:outline-none focus:ring-4 focus:ring-purple-500 focus:ring-offset-2 shadow-xl transition-all duration-300 ease-in-out transform hover:scale-110"
+              onClick={fetchMoreGroups}
+            >
+              Recommend More
+            </button>
+          </div>
         </div>
-        <div>
-          {/*<GroupList groups={groups} loading={loadingGroups} fetchMoreGroups={fetchMoreGroups} />*/}
+        <div className="w-full    flex items-center justify-center">
+          <GroupList groups={groups} loading={loadingGroups} fetchMoreGroups={fetchMoreGroups} />
         </div>
       </div>
 
