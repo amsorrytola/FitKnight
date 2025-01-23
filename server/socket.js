@@ -125,7 +125,9 @@ const setupSocket = (server) => {
       sendMessage(message);
     });
 
-    socket.on("sendChannelMessage", sendChannelMessage);
+    socket.on("send-channel-message", (message)=>{
+      console.log("message aaya",message);
+      sendChannelMessage(message)});
 
     // Buddy Finder Notifications
     socket.on("sendNoti", (data) => {

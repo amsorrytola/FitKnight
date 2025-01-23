@@ -37,6 +37,13 @@ function MessageBar() {
         fileUrl: undefined,
       });
     } else if (selectedChatType === "channel") {
+      console.log("Message info",{
+        sender: userInfo.id,
+        content: message,
+        messageType: "text",
+        fileUrl: undefined,
+        channelId: selectedChatData._id,
+      });
       socket.emit("send-channel-message", {
         sender: userInfo.id,
         content: message,
@@ -108,6 +115,11 @@ function MessageBar() {
           value={message}
           onChange={(e) => {
             setmessage(e.target.value);
+          }}
+          onKeyDown={(e)=>{
+            if(e.key==="Enter"){
+              handleSendMessage();
+            }
           }}
         />
         <button

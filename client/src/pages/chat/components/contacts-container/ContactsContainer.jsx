@@ -2,21 +2,32 @@ import React, { useEffect } from "react";
 import ProfileInfo from "./components/ProfileInfo";
 import NewDm from "./components/NewDm";
 import { apiClient } from "../../../../lib/api-client";
-import { GET_DM_CONTACTS_ROUTES, GET_USER_CHANNELS_ROUTE } from "../../../../utils/constants";
+import {
+  GET_DM_CONTACTS_ROUTES,
+  GET_USER_CHANNELS_ROUTE,
+} from "../../../../utils/constants";
 import { useAppStore } from "../../../../store/store";
 import ContactList from "../../../../components/ContactList.jsx";
 import CreateChannel from "./components/CreateChannel.jsx";
+import Logo from "../../../../assets/Gotham_Knights_Logo.svg.png";
+import { IoArrowBack } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 
 function ContactsContainer() {
-  const {setDirectMessagesContacts, directMessagesContacts, channels, setChannels} = useAppStore();
-  
+  const {
+    setDirectMessagesContacts,
+    directMessagesContacts,
+    channels,
+    setChannels,
+    userInfo,
+  } = useAppStore();
+const navigate = useNavigate();
   useEffect(() => {
     const getContacts = async () => {
-     
       const response = await apiClient.get(GET_DM_CONTACTS_ROUTES, {
         withCredentials: true,
       });
-      if(response.data.contacts){
+      if (response.data.contacts) {
         setDirectMessagesContacts(response.data.contacts);
       }
     };
@@ -24,60 +35,48 @@ function ContactsContainer() {
       const response = await apiClient.get(GET_USER_CHANNELS_ROUTE, {
         withCredentials: true,
       });
-      if(response.data.channels){
+      if (response.data.channels) {
         setChannels(response.data.channels);
       }
     };
     getContacts();
     getChannels();
-  },[setChannels, setDirectMessagesContacts]);
+  }, [setChannels, setDirectMessagesContacts]);
   return (
     <div className="relative md:w-[35vw] lg:w-[30vw] xl:w-[20vw] bg-[#1b1c24] border-r-2 border-[#2f303b] w-full">
-      <div className="pt-3">
-        <Logo />
+      <div className="pt-3 ">
+        <div onClick={()=>{navigate("/dashboard")}}>
+        <IoArrowBack className="mt-3 ml-2 text-2xl lg:text-4xl text-white cursor-pointer" />
+        </div>
+        <img src={Logo} alt="" className="h-[100px] w-[200px] ml-10" />
       </div>
       <div className="my-5">
         <div className="flex items-center justify-between pr-10">
           <Title text="Fitness-Groups" />
-          <CreateChannel />
+          {/* <CreateChannel /> */}
         </div>
-        <div className="max-h-[38vh] overflow-y-auto scrollbar-hidden">
-          <ContactList contacts={channels} isChannel={true}/>
+        <div className="h-[40vh] overflow-y-auto scrollbar-hidden">
+          <ContactList contacts={channels} isChannel={true} />
         </div>
       </div>
-      <div className="my-5">
-        <div className="flex items-center justify-between pr-10">
-          <Title text="Fitness-Buddies" />
-          <NewDm />
+      {userInfo.role === "Squire" ? (
+        <div className="my-5">
+          <div className="flex items-center justify-between pr-10">
+            <Title text="Fitness-Buddies" />
+            {/* <NewDm /> */}
+          </div>
+          <div className="h-[40vh] overflow-y-auto scrollbar-hidden">
+            <ContactList contacts={directMessagesContacts} />
+          </div>
         </div>
-        <div className="max-h-[38vh] overflow-y-auto scrollbar-hidden">
-          <ContactList contacts={directMessagesContacts} />
-        </div>
-
-      </div>
+      ) : null}
+      ;
       <ProfileInfo />
     </div>
   );
 }
 
 export default ContactsContainer;
-
-const Logo = () => {
-  return (
-    <div className="flex   justify-start items-center gap-2 pl-3">
-      <svg
-        fill="#7950F2"
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 64 64"
-        width="90px"
-        height="90px"
-      >
-        <path d="M32,10.927c-17.944,0-32,9.444-32,21.5s14.056,21.5,32,21.5s32-9.444,32-21.5C64,20.572,49.645,10.927,32,10.927z M52.517,40.264c-1.569,1.433-3.62,3.516-6.034,4.558c3.983-6.251-3.742-9.376-7.242-2.604c-1.327-5.47-5.913-1.693-7.241,5.209	c-1.328-6.902-5.914-10.679-7.241-5.209c-3.5-6.772-11.224-3.647-7.241,2.604c-2.414-1.042-4.466-3.125-6.034-4.688	c-2.173-2.214-3.5-4.819-3.621-7.293c0.121-5.47,5.914-10.679,14.483-12.763c-6.035,8.596,3.741,14.716,5.431,7.033l0.724-7.684	l1.69,1.953h3.62l1.69-1.953l0.724,7.684c1.69,7.553,11.466,1.563,5.431-7.033c8.569,2.214,14.362,7.423,14.483,12.893	C56.017,35.446,54.69,38.05,52.517,40.264z" />
-      </svg>
-      <span className="text-3xl font-semibold pl-2">Fit-Knight</span>
-    </div>
-  );
-};
 
 const Title = ({ text }) => {
   return (

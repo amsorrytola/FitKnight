@@ -19,6 +19,7 @@ const Notifications = () => {
     setSquireInfo,
     setUserInfo,
     setKnightInfo,
+    editChannel,
     setChannelInfo,
   } = useAppStore();
 
@@ -149,6 +150,7 @@ const Notifications = () => {
                   } else {
                     toast.error("Could not add buddy, please try again.");
                   }
+                  handleDeleteNotification(notification._id);
                 } catch (error) {
                   console.error("Error accepting buddy request:", error);
                   alert("Failed to accept buddy request. Please try again.");
@@ -189,11 +191,12 @@ const Notifications = () => {
                     { channelId: groupId, memberId: notification.sender }
                   );
                   console.log("Response:", response);
+                  editChannel(response.data.channel);
 
                   if (response.status === 201) {
                     toast.success("Member added successfully!");
                     getUserData();
-                    handleDeleteNotification();
+                    handleDeleteNotification(notification._id);
                   } else {
                     toast.error("Failed to add member. Please try again.");
                   }

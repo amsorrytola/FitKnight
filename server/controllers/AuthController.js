@@ -500,7 +500,7 @@ export const updateGroupInfo = async (req, res) => {
     // Save updated channel to the database
     await channel.save();
 
-    return res.status(200).json({ message: "Group updated successfully." });
+    return res.status(200).json({ message: "Group updated successfully.",channel: channel });
   } catch (error) {
     console.error("ERROR", error);
     return res.status(500).json({ message: "Internal Server Error" });
@@ -528,12 +528,21 @@ export const addBuddyToSquire = async (req, res) => {
       return res.status(404).json({ message: "Squire not found." });
     }
 
+    const buddy = await Squire.findOne({user: buddyId});
+    if (!buddy) {
+      return res.status(404).json({ message: "buddy not found." });
+    }
+
+
     if (squire.buddies.includes(buddyId)) {
       return res.status(400).json({ message: "Buddy is already added." });
     }
 
     squire.buddies.push(buddyId);
+    buddy.buddies.push(squire.user);
     await squire.save();
+    await buddy.save();
+    console.log(buddy);
 
     return res.status(200).json({
       message: "Buddy added successfully.",

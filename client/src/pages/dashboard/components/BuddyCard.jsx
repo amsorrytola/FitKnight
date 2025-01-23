@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Card} from "../../../components/ui/card";
+import { Card } from "../../../components/ui/card";
 import { Skeleton } from "../../../components/ui/skeleton";
 import {
   Dialog,
@@ -18,9 +18,8 @@ const BuddyCard = ({ buddy, loading }) => {
   const [isBuddyFriend, setIsBuddyFriend] = useState(false);
   const [image, setImage] = useState("");
   const navigate = useNavigate();
-  const { setSelectedChatData, setSelectedChatType, userInfo, squireInfo } =
+  const { setSelectedChatData, setSelectedChatType, userInfo, squireInfo,socket } =
     useAppStore();
-  const socket = useAppStore(state => state.socket);
 
   // // Debugging logs
   // console.log("SquireInfo", squireInfo);
@@ -29,21 +28,26 @@ const BuddyCard = ({ buddy, loading }) => {
 
   useEffect(() => {
     setImage(buddy?.user.image ? `${HOST}/${buddy.user.image}` : "");
-    setIsBuddyFriend(squireInfo.buddies.find((id) => id === buddy.user._id));
+    if (!loading) {
+      const isjoin = squireInfo.buddies.includes(buddy.user._id);
+
+      setIsBuddyFriend(isjoin);
+    }
   }, []);
 
   // Send a friend request
   const handleSendRequest = () => {
     console.log("Socket instance in handleSendRequest:", socket);
 
-    if (socket) {
-      socket.emit("sendNoti", {
+    if (socket.current) {
+      socket.current.emit("sendNoti", {
         senderId: userInfo.id,
         type: "BuddyRequest",
         recipientId: buddy.user._id,
         message: `${userInfo.firstName} wants to become your buddy!`,
       });
       console.log("Friend request sent to:", buddy.user._id);
+      
     } else {
       console.error(
         "Socket is undefined. Ensure SocketProvider is initialized."
@@ -140,7 +144,7 @@ const BuddyCard = ({ buddy, loading }) => {
           >
             View Profile
           </button>
-          {!isBuddyFriend ? (
+          {isBuddyFriend ? (
             <button
               className="px-5 py-2 bg-gray-300 text-gray-900 rounded-full text-sm font-semibold hover:bg-gray-400 transition-all shadow-md hover:shadow-lg"
               onClick={handleMessage}

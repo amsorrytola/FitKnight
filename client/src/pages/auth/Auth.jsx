@@ -47,6 +47,7 @@ const Auth = () => {
     setSquireInfo,
     setKnightInfo,
     setChannelInfo,
+    addChannel,
   } = useAppStore();
 
   const handleLocationChange = (newLocation) => {
@@ -209,15 +210,19 @@ const Auth = () => {
           setSquireInfo(response.data.squire);
         } else {
           setKnightInfo(response.data.knight);
-          setChannelInfo([response.data.channels]);
+          setChannelInfo(response.data.channels);
+          addChannel(response.data.channels[0]);
+
         }
 
-        // Navigate based on profile setup status
-        if (response.data.user.profileSetup) {
-          navigate("/dashboard");
-        } else {
+        
           navigate("/profile");
-        }
+        
+
+      
+          window.location.reload();
+    
+
       } catch (error) {
         console.error("Error during signup:", error.response || error);
         alert(error.response?.data?.message || "Something went wrong!");

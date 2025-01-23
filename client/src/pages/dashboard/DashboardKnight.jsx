@@ -63,7 +63,9 @@ function DashboardKnight() {
     setChannelInfo,
     setKnightInfo,
     setSquireInfo,
-    addChannel
+    addChannel,
+    editChannel,setSelectedChatType,
+    setSelectedChatData,
   } = useAppStore();
   const [isNotificatioOpen, setIsNotificatioOpen] = useState(false);
   const [isGroupProfileActive, setIsGroupProfileActive] = useState(false);
@@ -76,13 +78,15 @@ function DashboardKnight() {
   const [createGroupName, setCreateGroupName] = useState("");
   const navigate = useNavigate();
   useEffect(() => {
-    console.log("knights Chaneel Info", channelInfo);
-    console.log("KnightInfo",knightInfo);
     if (!userInfo.profileSetup) {
       toast("Please setup profile to continue");
       navigate("/profile");
     }
+    
   }, [userInfo, navigate]);
+
+  
+
 
     // Fetch notifications on load
   useEffect(() => {
@@ -273,6 +277,8 @@ function DashboardKnight() {
       console.log(response.data);
       getUserData();
       setIsGroupProfileActive(false);
+      editChannel(response.data.channel);
+
     } catch (error) {
       console.error("ERROR", error.response?.data || error.message);
     }
@@ -796,7 +802,12 @@ function DashboardKnight() {
                           </button>
                         )}
 
-                        <button className="px-5 py-2 bg-gray-700 text-white rounded-full text-sm font-semibold hover:bg-gray-600 transition-all shadow-md hover:shadow-lg">
+                        <button className="px-5 py-2 bg-gray-700 text-white rounded-full text-sm font-semibold hover:bg-gray-600 transition-all shadow-md hover:shadow-lg"
+                        onClick={()=>{
+                          setSelectedChatType("channel");
+                          setSelectedChatData(channel);
+                          navigate("/chat");
+                        }}>
                           See Messages
                         </button>
                       </div>

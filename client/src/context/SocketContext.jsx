@@ -36,17 +36,32 @@ export const SocketProvider = ({ children }) => {
       });
 
       // Handle received messages
-      const handleReceivedMessage = (message) => {
-        const { selectedChatData, selectedChatType, addMessages } = useAppStore.getState();
+      const handleRecievedMessage = (message) => {
+        const { selectedChatData, selectedChatType, addMessages, addContactsInDMContacts } =
+          useAppStore.getState();
 
         if (
           selectedChatType !== undefined &&
           (selectedChatData._id === message.sender._id ||
-            selectedChatData._id === message.recipient._id)
+            selectedChatData._id == message.recipient._id)
         ) {
-          addMessages(message); // Add message to chat
+          console.log("message rcv", message);
+          addMessages(message);
         }
+        addContactsInDMContacts(message)
       };
+
+      const handleRecievedChannelMessage = (message)=>{
+        const {selectedChatData, selectedChatType, addMessages, addChannelInChannelList} = useAppStore.getState();
+        
+        if(
+            selectedChatType !== undefined && 
+            selectedChatData._id === message.channelId
+        ){
+            addMessages(message);
+        }
+        addChannelInChannelList(message);
+      }
 
       // Handle notifications
       const handleNotification = (notification) => {
@@ -55,7 +70,8 @@ export const SocketProvider = ({ children }) => {
       };
 
       // Register socket event listeners
-      socket.current.on("receiveMessage", handleReceivedMessage);
+      socket.current.on("receiveMessage", handleRecievedMessage);
+      socket.current.on("receiveChannelMessage",handleRecievedChannelMessage);
       socket.current.on("notification", handleNotification);
 
       setSocket(socket); 

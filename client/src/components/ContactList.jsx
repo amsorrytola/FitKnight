@@ -12,13 +12,16 @@ function ContactList({ contacts, isChannel = false }) {
     selectedChatType,
     setSelectedChatMessages,
   } = useAppStore();
-  if (!isChannel) {
+  if (isChannel) {
     console.log("lelele", contacts);
   }
+  
   const handleClick = (contact) => {
     console.log("CONTACt",contact);
-    if (isChannel) setSelectedChatType("channel");
-    else setSelectedChatType("contact");
+    if (isChannel){
+    
+      setSelectedChatType("channel");
+    }else setSelectedChatType("contact");
     setSelectedChatData(contact);
     if (selectedChatData && selectedChatData._id !== contact._id) {
       setSelectedChatMessages([]);

@@ -88,7 +88,7 @@ export const addMemberToChannel = async (req, res) => {
     await channel.save();
     await squire.save();
 
-    return res.status(201).json({ channel });
+    return res.status(201).json({channel: channel });
   } catch (error) {
     console.error("ERROR", error);
     return res.status(500).send("Internal Server Error");

@@ -25,18 +25,28 @@ const GroupCard = ({ group, loading }) => {
   const [adminInfo,setAdminInfo] = useState(null);
   const navigate = useNavigate();
   
-  const { setSelectedChatData, setSelectedChatType, userInfo, squireInfo } =
+  const { setSelectedChatData, setSelectedChatType, userInfo,socket ,squireInfo } =
     useAppStore();
 
-  const socket = useAppStore(state => state.socket);
+  
+
   useEffect(() => {
-    console.log(group);
+    
+
     setImage(group?.image ? `${HOST}/${group.image}` : "");
-    setIsGroupJoined(squireInfo.groups.find((id) => id === group._id));
+    // setIsGroupJoined(squireInfo.groups.find((id) => id === group._id));
+    if(!loading){
+      const isjoin = squireInfo.groups.includes(group._id);
+      setIsGroupJoined(isjoin);
+      }
     
   }, []);
 
-  const handleMessage = async () => {};
+  const handleMessage = async () => {
+    setSelectedChatType("channel");
+    setSelectedChatData(group);
+    navigate("/chat");
+  };
   const handleSendRequest = async () => {
     console.log("Socket instance in handleSendRequest:", socket.current);
 
