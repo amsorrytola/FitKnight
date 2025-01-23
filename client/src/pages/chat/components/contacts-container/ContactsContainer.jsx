@@ -43,19 +43,19 @@ const navigate = useNavigate();
     getChannels();
   }, [setChannels, setDirectMessagesContacts]);
   return (
-    <div className="relative md:w-[35vw] lg:w-[30vw] xl:w-[20vw] bg-[#1b1c24] border-r-2 border-[#2f303b] w-full">
+    <div className="relative md:w-[35vw] h-screen lg:w-[30vw] xl:w-[20vw] bg-[#1b1c24] border-r-2 border-[#2f303b] w-full">
       <div className="pt-3 ">
         <div onClick={()=>{navigate("/dashboard")}}>
         <IoArrowBack className="mt-3 ml-2 text-2xl lg:text-4xl text-white cursor-pointer" />
         </div>
         <img src={Logo} alt="" className="h-[100px] w-[200px] ml-10" />
       </div>
-      <div className="my-5">
-        <div className="flex items-center justify-between pr-10">
+      <div className="my-5 h-[35%]">
+        <div className="flex items-center justify-between pr-10 ">
           <Title text="Fitness-Groups" />
           {/* <CreateChannel /> */}
         </div>
-        <div className="h-[40vh] overflow-y-auto scrollbar-hidden">
+        <div className="h-[40%] overflow-y-auto scrollbar-hidden">
           <ContactList contacts={channels} isChannel={true} />
         </div>
       </div>
@@ -65,13 +65,15 @@ const navigate = useNavigate();
             <Title text="Fitness-Buddies" />
             {/* <NewDm /> */}
           </div>
-          <div className="h-[40vh] overflow-y-auto scrollbar-hidden">
+          <div className="h-[40%] overflow-y-auto scrollbar-hidden">
             <ContactList contacts={directMessagesContacts} />
           </div>
         </div>
-      ) : null}
-      ;
+      ) : null};
+      <div className="mt-5">
       <ProfileInfo />
+
+      </div>
     </div>
   );
 }
